@@ -2,7 +2,7 @@
 
 Este repositório contém um sistema de autenticação e análise de perfil de investidor, desenvolvido como um projeto prático de programação. Ele permite que os usuários criem e gerenciem suas contas, além de determinar seu perfil de investidor e receber sugestões de alocação de investimentos.
 
-##📚 Bibliotecas Utilizadas
+## 📚 Bibliotecas Utilizadas
 O projeto utiliza as seguintes bibliotecas Python para suas funcionalidades:
 
 os: Para interações com o sistema operacional, como a limpeza do terminal, proporcionando uma experiência de usuário mais limpa e intuitiva.
@@ -12,7 +12,7 @@ time: Permite introduzir pausas na execução do programa (time.sleep()) ⏳, me
 smtplib: A biblioteca padrão do Python para enviar e-mails via protocolo SMTP 📧. É crucial para o envio dos códigos de segurança.
 email.message: Uma classe útil para criar e formatar mensagens de e-mail ✉️, facilitando a definição de assunto, remetente, destinatário e conteúdo das mensagens enviadas.
 
-##🗂️ Organização dos Módulos
+## 🗂️ Organização dos Módulos
 O projeto está organizado em um único arquivo Python, que encapsula todas as funcionalidades de autenticação, perfil de investidor e menus de navegação:
 
 main.py (ou o nome do seu arquivo Python): Contém toda a lógica do programa, incluindo:
@@ -22,7 +22,7 @@ Gerenciamento de Usuários (Autenticação): Funções para cadastrar_usuario(),
 Gerenciamento de Perfil de Investidor: Funções para pedir_respostas_investidor(), definir_perfil_investidor(), salvar_perfil_investidor(), carregar_perfil_investidor(), exibir_recomendacoes() e excluir_perfil_investidor_usuario().
 Menus de Navegação: Funções para guiar o usuário através das opções do sistema, como menu_usuario_logado() e menu_principal_autenticacao().
 
-##✨ Funcionalidades
+## ✨ Funcionalidades
 O sistema oferece as seguintes funcionalidades principais:
 
 Cadastro de Usuário 🧑‍💻: Novos usuários podem criar uma conta fornecendo e-mail e uma senha que atenda a critérios de segurança. Um código de verificação é enviado por e-mail para confirmar a autenticidade do cadastro.
@@ -34,5 +34,5 @@ Personalização da Alocação ⚙️: O usuário tem a opção de ajustar manua
 Persistência de Dados 💾: As informações de usuários e perfis de investidor são salvas em arquivos de texto (usuarios.txt e perfis_investidores.txt), permitindo que os dados sejam mantidos entre as sessões.
 Exclusão de Perfil de Investidor 🗑️: O usuário pode remover seu perfil de investidor do sistema.
 
-##💡 Inovação e Aplicação:
+## 💡 Inovação e Aplicação:
 O InvestiMatch vai além da simples autenticação! Ele incorpora um sistema de análise de perfil de investidor, que, embora simplificado, demonstra como um aplicativo pode oferecer recomendações personalizadas com base nas respostas do usuário. A funcionalidade de salvar e carregar perfis, juntamente com as sugestões de alocação de investimentos, cria uma experiência de usuário mais rica e prática, abordando conceitos financeiros básicos de forma acessível.
