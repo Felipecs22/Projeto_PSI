@@ -51,14 +51,14 @@ def validar_email():
 #valida a criação de senha e confirma com código enviado por e-mail
 def validar_senha(email_destinatario):
     while True:
-        senha = input("Crie sua nova senha (8 caracteres, letras, números, 1 maiúscula. Ex: Senha123): ").strip()
+        senha = input("Crie sua nova senha (pelo menos 8 caracteres, com: pelo menos 1 número e uma letra maiúscula e minúscula. Ex: Codigo321): ").strip()
 
         if not senha.isalnum():
             print("Senha inválida. Use apenas letras e números")
             continue
 
-        if not (len(senha) == 8 and re.search(r"[A-Z]", senha) and re.search(r"[a-z]", senha) and re.search(r"[0-9]", senha)):
-            print("Senha inválida. Deve ter 8 caracteres, maiúscula, minúscula e número")
+        if not (len(senha) >= 8 and re.search(r"[A-Z]", senha) and re.search(r"[a-z]", senha) and re.search(r"[0-9]", senha)):
+            print("Senha inválida. Deve ter pelo menos 8 caracteres, maiúscula, minúscula e número")
             continue
 
         confirmar_senha = input("Confirme sua senha: ").strip()
@@ -67,14 +67,14 @@ def validar_senha(email_destinatario):
             mensagem_email = "Seu código para validação de identidade e confirmação de senha é:"
             enviar_email(email_destinatario, codigo, mensagem_email)
 
-            for tentativa in range(3):
+            for tentativa in range(5):
                 codigo_digitado = input("Digite o código de verificação enviado por email: ").strip()
                 if codigo_digitado == str(codigo):
                     print("Código correto! Operação confirmada")
                     return senha
-                print(f"Código incorreto. Tente novamente ({2-tentativa} tentativas restantes)")
+                print(f"Código incorreto. Tente novamente ({4-tentativa} tentativas restantes)")
 
-            print("Número máximo de tentativas para o código excedido")
+            print("Máximo de tentativas para o código excedido")
             return None
         print("As senhas não coincidem. Tente novamente")
 
