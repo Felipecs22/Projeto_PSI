@@ -12,6 +12,8 @@ senha_app = "zvwjliixtnnwkirm"  #senha app gmail
 arquivo_usuarios = "usuarios.txt" #arquivo email+senha
 ordem_lista = ["Tolerancia ao risco", "Experiencia", "Necessidade de liquidez"] #ordenando lista perfil
 
+
+
 #Funções gerais
 
 #Envia um e-mail com código de segurança
@@ -35,6 +37,8 @@ def limpar_terminal():
 def pausar_e_limpar():
     input("\nPressione Enter para continuar...")
     limpar_terminal()
+
+
 
 
 #Validações de autenticação
@@ -76,6 +80,8 @@ def validar_senha(email_destinatario):
             print("Máximo de tentativas para o código excedido")
             return None
         print("As senhas não coincidem. Tente novamente")
+
+
 
 
 #Gerenciamento de usuários
@@ -183,6 +189,8 @@ def redefinir_senha():
 
     print("Número máximo de tentativas excedido. A senha não foi alterada")
     pausar_e_limpar()
+
+
 
 
 #Funções Perfil de investidor
@@ -415,6 +423,7 @@ def excluir_perfil_investidor_usuario(email_usuario):
     pausar_e_limpar()
 
 
+
 #MENUS
 
 #menu principal para usuários logados
@@ -472,10 +481,11 @@ def menu_principal_autenticacao():
             pausar_e_limpar()
 
 
+
 #execução
 
-if __name__ == "__main__":
-    open(arquivo_usuarios, "a", encoding="utf-8").close()
-    open(arquivo_perfis, "a", encoding="utf-8").close()
 
-    menu_principal_autenticacao()
+open(arquivo_usuarios, "a", encoding="utf-8").close()
+open(arquivo_perfis, "a", encoding="utf-8").close()
+
+menu_principal_autenticacao()
