@@ -5,12 +5,12 @@ import smtplib
 from email.message import EmailMessage
 import os
 
-#configurações 
-ARQUIVO_PERFIS = "perfis_investidores.txt"
-EMAIL_REMETENTE = "fcsantos2201@gmail.com"  #email que vai interagir com user
-SENHA_APP = "zvwjliixtnnwkirm"  #senha app gmail
-ARQUIVO_USUARIOS = "usuarios.txt" #arquivo email+senha
-PROFILE_KEYS_ORDER = ["Tolerancia ao risco", "Experiencia", "Necessidade de liquidez"] #ordenando dicionario perfil
+#configurações
+arquivo_perfis = "perfis_investidores.txt"
+email_remetente = "fcsantos2201@gmail.com"  #email que vai interagir com user
+senha_app = "zvwjliixtnnwkirm"  #senha app gmail
+arquivo_usuarios = "usuarios.txt" #arquivo email+senha
+profile_keys_order = ["Tolerancia ao risco", "Experiencia", "Necessidade de liquidez"] #ordenando dicionario perfil
 
 
 #Funções gerais
@@ -19,18 +19,15 @@ PROFILE_KEYS_ORDER = ["Tolerancia ao risco", "Experiencia", "Necessidade de liqu
 def enviar_email(destinatario, codigo, info_mensagem):
     msg = EmailMessage()
     msg["Subject"] = "Sistema de Autenticação - Código de segurança"
-    msg["From"] = EMAIL_REMETENTE
+    msg["From"] = email_remetente
     msg["To"] = destinatario
     msg.set_content(f"{info_mensagem} {codigo}")
 
-    try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-            smtp.login(EMAIL_REMETENTE, SENHA_APP)
-            smtp.send_message(msg)
-        print(" Código de verificação enviado para o seu email!")
-    except Exception as e:
-        print(f" Erro ao enviar email: {e}")
-       
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login(email_remetente, senha_app)
+        smtp.send_message(msg)
+    print(" Código de verificação enviado para o seu email!")
+
 #limpa o console
 def limpar_terminal():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -59,7 +56,7 @@ def validar_senha(email_destinatario):
         if not senha.isalnum():
             print("Senha inválida. Use apenas letras e números")
             continue
-        
+
         if not (len(senha) == 8 and re.search(r"[A-Z]", senha) and re.search(r"[a-z]", senha) and re.search(r"[0-9]", senha)):
             print("Senha inválida. Deve ter 8 caracteres, maiúscula, minúscula e número")
             continue
@@ -69,30 +66,30 @@ def validar_senha(email_destinatario):
             codigo = random.randint(100000, 999999)
             mensagem_email = "Seu código para validação de identidade e confirmação de senha é:"
             enviar_email(email_destinatario, codigo, mensagem_email)
-            
+
             for tentativa in range(3):
                 codigo_digitado = input("Digite o código de verificação enviado por email: ").strip()
                 if codigo_digitado == str(codigo):
                     print("Código correto! Operação confirmada")
                     return senha
                 print(f"Código incorreto. Tente novamente ({2-tentativa} tentativas restantes)")
-            
+
             print("Número máximo de tentativas para o código excedido")
             return None
         print("As senhas não coincidem. Tente novamente")
 
 
-#Gerenciamento de usuários 
+#Gerenciamento de usuários
 
 #verifica se o e-mail já existe no arquivo de usuários
 def email_ja_cadastrado(email):
-    try:
-        with open(ARQUIVO_USUARIOS, "r", encoding="utf-8") as arquivo:
-            for linha in arquivo:
-                if linha.strip().startswith(email + ";"):
-                    return True
-    except FileNotFoundError:
-        pass
+    if not os.path.exists(arquivo_usuarios):
+        return False
+
+    with open(arquivo_usuarios, "r", encoding="utf-8") as arquivo:
+        for linha in arquivo:
+            if linha.strip().startswith(email + ";"):
+                return True
     return False
 
 #realiza o cadastro de um novo usuário
@@ -109,18 +106,13 @@ def cadastrar_usuario():
 
     senha = validar_senha(email)
     if senha:
-        try:
-            with open(ARQUIVO_USUARIOS, "a", encoding="utf-8") as arquivo:
-                arquivo.write(f"{email};{senha}\n")
-            print("\n✅ Cadastro realizado com sucesso!")
-            pausar_e_limpar()
-            return email
-        except IOError:
-            print("\n❌ Erro ao salvar usuário")
-            pausar_e_limpar()
-            return None
+        with open(arquivo_usuarios, "a", encoding="utf-8") as arquivo:
+            arquivo.write(f"{email};{senha}\n")
+        print("\nCadastro realizado com sucesso!")
+        pausar_e_limpar()
+        return email
     else:
-        print("\n❌ Falha no cadastro (código ou senha)")
+        print("\nFalha no cadastro (código ou senha)")
         pausar_e_limpar()
         return None
 
@@ -131,21 +123,18 @@ def login():
     email = input("Email: ").strip().lower()
     senha_digitada = input("Senha: ").strip()
 
-    try:
-        with open(ARQUIVO_USUARIOS, "r", encoding="utf-8") as arquivo:
-            for linha in arquivo:
-                e_arquivo, s_arquivo = linha.strip().split(";", 1)
-                if e_arquivo == email and s_arquivo == senha_digitada:
-                    print("\n✅ Login bem-sucedido!")
-                    return email  
-    except FileNotFoundError:
+    if not os.path.exists(arquivo_usuarios):
         print("Nenhum usuário cadastrado. Registre-se primeiro")
         return None
-    except ValueError: 
-        print("\n❌ Formato de arquivo de usuário inválido") 
-        return None
-    
-    print("\n❌ Email ou senha inválidos")
+
+    with open(arquivo_usuarios, "r", encoding="utf-8") as arquivo:
+        for linha in arquivo:
+            e_arquivo, s_arquivo = linha.strip().split(";", 1)
+            if e_arquivo == email and s_arquivo == senha_digitada:
+                print("\nLogin bem-sucedido!")
+                return email
+
+    print("\nEmail ou senha inválidos")
     return None
 
 #permite que um usuário redefina sua senha
@@ -155,7 +144,7 @@ def redefinir_senha():
     email = validar_email()
 
     if not email_ja_cadastrado(email):
-        print("❌ Email não encontrado")
+        print("Email não encontrado")
         pausar_e_limpar()
         return
 
@@ -166,31 +155,27 @@ def redefinir_senha():
     for tentativa_codigo in range(3):
         codigo_digitado = input("Digite o código enviado ao seu email para redefinir a senha: ").strip()
         if codigo_digitado == str(codigo_redefinicao):
-            print("✅ Código correto.\nAgora, crie uma nova senha")
-            nova_senha = validar_senha(email) 
+            print("Código correto.\nAgora, crie uma nova senha")
+            nova_senha = validar_senha(email)
             if nova_senha:
-                try:
-                    with open(ARQUIVO_USUARIOS, "r", encoding="utf-8") as f_leitura:
-                        linhas = f_leitura.readlines()
-                    
-                    with open(ARQUIVO_USUARIOS, "w", encoding="utf-8") as f_escrita:
-                        for linha_atual in linhas:
-                            if linha_atual.strip().startswith(email + ";"):
-                                f_escrita.write(f"{email};{nova_senha}\n")
-                            else:
-                                f_escrita.write(linha_atual)
-                    print("✅ Senha redefinida com sucesso!")
-                except IOError:
-                    print("Erro ao redefinir senha no arquivo")
-                finally:
-                    pausar_e_limpar()
-                    return
-            else:
-                print("❌ Falha ao criar a nova senha. A senha não foi alterada")
+                with open(arquivo_usuarios, "r", encoding="utf-8") as f_leitura:
+                    linhas = f_leitura.readlines()
+
+                with open(arquivo_usuarios, "w", encoding="utf-8") as f_escrita:
+                    for linha_atual in linhas:
+                        if linha_atual.strip().startswith(email + ";"):
+                            f_escrita.write(f"{email};{nova_senha}\n")
+                        else:
+                            f_escrita.write(linha_atual)
+                print("Senha redefinida com sucesso!")
                 pausar_e_limpar()
                 return
-        print(f"❌ Código incorreto. Tentativas restantes: {2-tentativa_codigo}")
-            
+            else:
+                print("Falha ao criar a nova senha. A senha não foi alterada")
+                pausar_e_limpar()
+                return
+        print(f"Código incorreto. Tentativas restantes: {2-tentativa_codigo}")
+
     print("Número máximo de tentativas excedido. A senha não foi alterada")
     pausar_e_limpar()
 
@@ -212,21 +197,23 @@ def pedir_respostas_investidor():
     respostas = {}
     for i, pergunta_texto in enumerate(perguntas):
         while True:
-            try:
-                resposta_num = int(input(f"\n{i+1}. {pergunta_texto}"))
+            resposta_num_str = input(f"\n{i+1}. {pergunta_texto}")
+            if resposta_num_str.isdigit():
+                resposta_num = int(resposta_num_str)
                 if 1 <= resposta_num <= 5:
-                    respostas[PROFILE_KEYS_ORDER[i]] = resposta_num
+                    respostas[profile_keys_order[i]] = resposta_num
                     break
-                print("Por favor, digite um número entre 1 e 5")
-            except ValueError:
+                else:
+                    print("Por favor, digite um número entre 1 e 5")
+            else:
                 print("Entrada inválida. Digite um número inteiro")
     return respostas
 
 #determina o perfil (numérico e textual) com base nas respostas
 def definir_perfil_investidor(respostas_investidor):
-    if not respostas_investidor or len(respostas_investidor) != len(PROFILE_KEYS_ORDER):
+    if not respostas_investidor or len(respostas_investidor) != len(profile_keys_order):
         return None, "Perfil não definido"
-    
+
     media = sum(respostas_investidor.values()) / len(respostas_investidor)
     perfil_num = round(media)
     perfis_map = {1: "Muito Conservador", 2: "Conservador", 3: "Moderado", 4: "Agressivo", 5: "Insano"}
@@ -236,16 +223,15 @@ def definir_perfil_investidor(respostas_investidor):
 def salvar_perfil_investidor(email_usuario, respostas):
     linhas_existentes = []
     encontrou_perfil = False
-    try:
-        with open(ARQUIVO_PERFIS, "r", encoding="utf-8") as f:
-            linhas_existentes = f.readlines()
-    except FileNotFoundError:
-        pass
 
-    respostas_str = [str(respostas[key]) for key in PROFILE_KEYS_ORDER]
+    if os.path.exists(arquivo_perfis):
+        with open(arquivo_perfis, "r", encoding="utf-8") as f:
+            linhas_existentes = f.readlines()
+
+    respostas_str = [str(respostas[key]) for key in profile_keys_order]
     nova_linha = f"{email_usuario};{';'.join(respostas_str)}\n"
 
-    with open(ARQUIVO_PERFIS, "w", encoding="utf-8") as f:
+    with open(arquivo_perfis, "w", encoding="utf-8") as f:
         for linha in linhas_existentes:
             if linha.startswith(email_usuario + ";"):
                 f.write(nova_linha)
@@ -254,18 +240,18 @@ def salvar_perfil_investidor(email_usuario, respostas):
                 f.write(linha)
         if not encontrou_perfil:
             f.write(nova_linha)
-    print("💾 Perfil de investidor salvo/atualizado!")
+    print("Perfil de investidor salvo/atualizado!")
 
 #carrega o perfil do investidor do arquivo
 def carregar_perfil_investidor(email_usuario):
-    try:
-        with open(ARQUIVO_PERFIS, "r", encoding="utf-8") as arquivo:
-            for linha in arquivo:
-                partes = linha.strip().split(";")
-                if partes[0] == email_usuario and len(partes) == len(PROFILE_KEYS_ORDER) + 1:
-                    return {PROFILE_KEYS_ORDER[i]: int(partes[i+1]) for i in range(len(PROFILE_KEYS_ORDER))}
-    except FileNotFoundError:
-        pass
+    if not os.path.exists(arquivo_perfis):
+        return None
+
+    with open(arquivo_perfis, "r", encoding="utf-8") as arquivo:
+        for linha in arquivo:
+            partes = linha.strip().split(";")
+            if partes[0] == email_usuario and len(partes) == len(profile_keys_order) + 1:
+                return {profile_keys_order[i]: int(partes[i+1]) for i in range(len(profile_keys_order))}
     return None
 
 #mostra sugestões de alocação conforme o perfil e valor a investir
@@ -273,16 +259,18 @@ def exibir_recomendacoes(perfil_num, perfil_str):
     if perfil_num is None:
         print("Não é possível gerar recomendações sem um perfil definido")
         return
-    
-    print(f"\n📊 Seu Perfil de Investidor: {perfil_str} (Nível {perfil_num})")
+
+    print(f"\nSeu Perfil de Investidor: {perfil_str} (Nível {perfil_num})")
 
     while True:
+        valor_aporte_str = input("Qual o valor que você pretende investir? R$ ")
         try:
-            valor_aporte = float(input("Qual o valor que você pretende investir? R$ "))
+            valor_aporte = float(valor_aporte_str)
             if valor_aporte > 0: break
             print("Por favor, insira um valor positivo")
         except ValueError:
-            print("Valor inválido. Use números (ex: 1000.50)")
+             print("Valor inválido. Use números (ex: 1000.50)")
+
 
     alocacoes_padrao = {
         1: {'Renda Fixa': 50, 'FIIs': 20, 'Ações': 5,  'Cripto': 0,  'Reserva de Emergência': 25},
@@ -293,40 +281,44 @@ def exibir_recomendacoes(perfil_num, perfil_str):
     }
     alocacao_sugerida = alocacoes_padrao.get(perfil_num, {}).copy()
 
-    print(f"\n💰 Sugestão de Alocação para R$ {valor_aporte:,.2f}:")
+    print(f"\nSugestão de Alocação para R$ {valor_aporte:,.2f}:")
     if not alocacao_sugerida:
         print("Não há sugestão de alocação para este perfil")
         return
 
     for tipo, perc in alocacao_sugerida.items():
-        print(f"   - {tipo}: {perc}% → R$ {valor_aporte * (perc/100):,.2f}")
+        print(f"   - {tipo}: {perc}% -> R$ {valor_aporte * (perc/100):,.2f}")
 
-    if input("\nDeseja personalizar a alocação? (s/n): ").strip().lower() == 's':
+    time.sleep(3) # Adiciona um delay de 3 segundos
+
+    if input("\nDeseja personalizar a alocação? (sim/não): ").strip().lower() == 'sim':
         print("\nDigite os percentuais desejados (total deve ser 100%):")
         while True:
             nova_alocacao = {}
             total_perc = 0.0
             for tipo_ativo in alocacao_sugerida.keys():
                 while True:
+                    perc_str = input(f"{tipo_ativo} (%): ")
                     try:
-                        perc = float(input(f"{tipo_ativo} (%): "))
+                        perc = float(perc_str)
                         if 0 <= perc <= 100:
                             nova_alocacao[tipo_ativo] = perc
                             total_perc += perc
                             break
-                        print("Percentual entre 0 e 100")
+                        else:
+                            print("Percentual entre 0 e 100")
                     except ValueError:
                         print("Entrada inválida")
-            
+
             if abs(total_perc - 100.0) > 0.01:
                 print(f"\nA soma foi {total_perc:.2f}%. Deve ser 100%. Tente de novo\n")
             else:
                 alocacao_sugerida = nova_alocacao
                 break
-        
+
         print("\nAlocação final do seu aporte:")
         for tipo, perc in alocacao_sugerida.items():
-            print(f"- {tipo}: {perc:.2f}% → R$ {valor_aporte * (perc/100):,.2f}")
+            print(f"- {tipo}: {perc:.2f}% -> R$ {valor_aporte * (perc/100):,.2f}")
 
 #Permite visualizar, atualizar perfil e ver recomendações
 def gerenciar_perfil_e_recomendacoes(email_usuario):
@@ -339,9 +331,9 @@ def gerenciar_perfil_e_recomendacoes(email_usuario):
         print(f"Seu perfil atual: {perfil_str} (Nível {perfil_num})")
         print("Respostas fornecidas:")
         for chave, valor in respostas_atuais.items(): print(f"   - {chave}: {valor}")
-        
+
         exibir_recomendacoes(perfil_num, perfil_str)
-        
+
         print("\nOpções:")
         print("1 - Atualizar meu perfil (refazer questionário)")
         print("2 - Voltar ao menu anterior")
@@ -352,7 +344,7 @@ def gerenciar_perfil_e_recomendacoes(email_usuario):
             exibir_recomendacoes(perfil_num_novo, perfil_str_novo)
     else:
         print("Você ainda não tem um perfil de investidor")
-        if input("Deseja criar um agora? (s/n): ").strip().lower() == 's':
+        if input("Deseja criar um agora? (sim/não): ").strip().lower() == 'sim':
             respostas_novas = pedir_respostas_investidor()
             salvar_perfil_investidor(email_usuario, respostas_novas)
             perfil_num_novo, perfil_str_novo = definir_perfil_investidor(respostas_novas)
@@ -363,33 +355,31 @@ def gerenciar_perfil_e_recomendacoes(email_usuario):
 def excluir_perfil_investidor_usuario(email_usuario):
     limpar_terminal()
     print("Excluir Perfil de Investidor\n")
-    if input(f"Tem certeza que deseja excluir seu perfil, {email_usuario}? (s/n): ").strip().lower() == 's':
+    if input(f"Tem certeza que deseja excluir seu perfil, {email_usuario}? (sim/não): ").strip().lower() == 'sim':
         linhas_existentes = []
         perfil_removido = False
-        try:
-            with open(ARQUIVO_PERFIS, "r", encoding="utf-8") as arquivo:
-                linhas_existentes = arquivo.readlines()
-        except FileNotFoundError:
+
+        if not os.path.exists(arquivo_perfis):
             print("Nenhum arquivo de perfis para excluir")
             pausar_e_limpar()
             return
 
-        try:
-            with open(ARQUIVO_PERFIS, "w", encoding="utf-8") as arquivo:
-                for linha in linhas_existentes:
-                    if not linha.startswith(email_usuario + ";"):
-                        arquivo.write(linha)
-                    else:
-                        perfil_removido = True
-            print("🗑️ Perfil de investidor excluído" if perfil_removido else "Perfil não encontrado")
-        except IOError:
-            print("Erro ao tentar excluir o perfil")
+        with open(arquivo_perfis, "r", encoding="utf-8") as arquivo:
+            linhas_existentes = arquivo.readlines()
+
+        with open(arquivo_perfis, "w", encoding="utf-8") as arquivo:
+            for linha in linhas_existentes:
+                if not linha.startswith(email_usuario + ";"):
+                    arquivo.write(linha)
+                else:
+                    perfil_removido = True
+        print("Perfil de investidor excluído" if perfil_removido else "Perfil não encontrado")
     else:
         print("Exclusão cancelada")
     pausar_e_limpar()
 
 
-#MENUS 
+#MENUS
 
 #menu principal para usuários logados
 def menu_usuario_logado(email_usuario):
@@ -408,7 +398,7 @@ def menu_usuario_logado(email_usuario):
             print("Fazendo logout...")
             time.sleep(1)
             limpar_terminal()
-            break 
+            break
         else:
             print("Opção inválida")
             pausar_e_limpar()
@@ -417,7 +407,7 @@ def menu_usuario_logado(email_usuario):
 def menu_principal_autenticacao():
     limpar_terminal()
     while True:
-        print("Sistema de Análise de Perfil de Investidor") 
+        print("Sistema de Análise de Perfil de Investidor")
         print("\nMenu de Autenticação:")
         print("1 - Login")
         print("2 - Cadastrar-se")
@@ -431,26 +421,22 @@ def menu_principal_autenticacao():
                 pausar_e_limpar()
                 menu_usuario_logado(email_logado)
             else:
-                input("\nPressione Enter para voltar ao menu...") 
+                input("\nPressione Enter para voltar ao menu...")
                 limpar_terminal()
         elif opcao == "2": cadastrar_usuario()
         elif opcao == "3": redefinir_senha()
         elif opcao == "4":
-            print("\nEncerrando o sistema... Até logo! 👋")
+            print("\nEncerrando o sistema... Até logo!")
             break
         else:
             print("Opção inválida. Tente novamente")
             pausar_e_limpar()
 
 
-#execução 
+#execução
 
 if __name__ == "__main__":
-    #garante que os arquivos de dados existam
-    try:
-        open(ARQUIVO_USUARIOS, "a", encoding="utf-8").close()
-        open(ARQUIVO_PERFIS, "a", encoding="utf-8").close()
-    except IOError:
-        print("Alerta: Não foi possível verificar/criar arquivos de dados iniciais")
+    open(arquivo_usuarios, "a", encoding="utf-8").close()
+    open(arquivo_perfis, "a", encoding="utf-8").close()
 
     menu_principal_autenticacao()
