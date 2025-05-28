@@ -5,13 +5,12 @@ import smtplib
 from email.message import EmailMessage
 import os
 
-#configurações
+#definições
 arquivo_perfis = "perfis_investidores.txt"
 email_remetente = "fcsantos2201@gmail.com"  #email que vai interagir com user
 senha_app = "zvwjliixtnnwkirm"  #senha app gmail
 arquivo_usuarios = "usuarios.txt" #arquivo email+senha
-profile_keys_order = ["Tolerancia ao risco", "Experiencia", "Necessidade de liquidez"] #ordenando dicionario perfil
-
+ordem_lista = ["Tolerancia ao risco", "Experiencia", "Necessidade de liquidez"] #ordenando lista perfil
 
 #Funções gerais
 
@@ -129,11 +128,13 @@ def login():
 
     with open(arquivo_usuarios, "r", encoding="utf-8") as arquivo:
         for linha in arquivo:
-            e_arquivo, s_arquivo = linha.strip().split(";", 1)
-            if e_arquivo == email and s_arquivo == senha_digitada:
-                print("\nLogin bem-sucedido!")
-                return email
-
+            try:
+                e_arquivo, s_arquivo = linha.strip().split(";", 1)
+                if e_arquivo == email and s_arquivo == senha_digitada:
+                    print("\nLogin bem-sucedido!")
+                    return email
+            except ValueError:
+                continue 
     print("\nEmail ou senha inválidos")
     return None
 
@@ -158,15 +159,19 @@ def redefinir_senha():
             print("Código correto.\nAgora, crie uma nova senha")
             nova_senha = validar_senha(email)
             if nova_senha:
+                linhas_atualizadas = [] 
                 with open(arquivo_usuarios, "r", encoding="utf-8") as f_leitura:
                     linhas = f_leitura.readlines()
 
+                for linha_atual in linhas:
+                    if linha_atual.strip().startswith(email + ";"):
+                        linhas_atualizadas.append(f"{email};{nova_senha}\n")
+                    else:
+                        linhas_atualizadas.append(linha_atual)
+                
                 with open(arquivo_usuarios, "w", encoding="utf-8") as f_escrita:
-                    for linha_atual in linhas:
-                        if linha_atual.strip().startswith(email + ";"):
-                            f_escrita.write(f"{email};{nova_senha}\n")
-                        else:
-                            f_escrita.write(linha_atual)
+                    f_escrita.writelines(linhas_atualizadas) 
+
                 print("Senha redefinida com sucesso!")
                 pausar_e_limpar()
                 return
@@ -197,11 +202,11 @@ def pedir_respostas_investidor():
     respostas = {}
     for i, pergunta_texto in enumerate(perguntas):
         while True:
-            resposta_num_str = input(f"\n{i+1}. {pergunta_texto}")
+            resposta_num_str = input(f"\n{i+1}. {pergunta_texto}").strip() 
             if resposta_num_str.isdigit():
                 resposta_num = int(resposta_num_str)
                 if 1 <= resposta_num <= 5:
-                    respostas[profile_keys_order[i]] = resposta_num
+                    respostas[ordem_lista[i]] = resposta_num
                     break
                 else:
                     print("Por favor, digite um número entre 1 e 5")
@@ -211,13 +216,16 @@ def pedir_respostas_investidor():
 
 #determina o perfil (numérico e textual) com base nas respostas
 def definir_perfil_investidor(respostas_investidor):
-    if not respostas_investidor or len(respostas_investidor) != len(profile_keys_order):
+    if not respostas_investidor or len(respostas_investidor) != len(ordem_lista):
         return None, "Perfil não definido"
 
     media = sum(respostas_investidor.values()) / len(respostas_investidor)
-    perfil_num = round(media)
+    perfil_nota = round(media)
+    
+    perfil_nota = max(1, min(5, perfil_nota))
+
     perfis_map = {1: "Muito Conservador", 2: "Conservador", 3: "Moderado", 4: "Agressivo", 5: "Insano"}
-    return perfil_num, perfis_map.get(perfil_num, "Desconhecido")
+    return perfil_nota, perfis_map.get(perfil_nota, "Desconhecido")
 
 #salva ou atualiza o perfil do investidor no arquivo
 def salvar_perfil_investidor(email_usuario, respostas):
@@ -228,18 +236,25 @@ def salvar_perfil_investidor(email_usuario, respostas):
         with open(arquivo_perfis, "r", encoding="utf-8") as f:
             linhas_existentes = f.readlines()
 
-    respostas_str = [str(respostas[key]) for key in profile_keys_order]
-    nova_linha = f"{email_usuario};{';'.join(respostas_str)}\n"
+    respostas_str_list = []
+    for key in ordem_lista:
+        respostas_str_list.append(str(respostas.get(key, ''))) 
+
+    nova_linha = f"{email_usuario};{';'.join(respostas_str_list)}\n"
+    
+    linhas_para_escrever = []
+    for linha in linhas_existentes:
+        if linha.startswith(email_usuario + ";"):
+            linhas_para_escrever.append(nova_linha)
+            encontrou_perfil = True
+        else:
+            linhas_para_escrever.append(linha)
+    
+    if not encontrou_perfil:
+        linhas_para_escrever.append(nova_linha)
 
     with open(arquivo_perfis, "w", encoding="utf-8") as f:
-        for linha in linhas_existentes:
-            if linha.startswith(email_usuario + ";"):
-                f.write(nova_linha)
-                encontrou_perfil = True
-            else:
-                f.write(linha)
-        if not encontrou_perfil:
-            f.write(nova_linha)
+        f.writelines(linhas_para_escrever)
     print("Perfil de investidor salvo/atualizado!")
 
 #carrega o perfil do investidor do arquivo
@@ -250,26 +265,55 @@ def carregar_perfil_investidor(email_usuario):
     with open(arquivo_perfis, "r", encoding="utf-8") as arquivo:
         for linha in arquivo:
             partes = linha.strip().split(";")
-            if partes[0] == email_usuario and len(partes) == len(profile_keys_order) + 1:
-                return {profile_keys_order[i]: int(partes[i+1]) for i in range(len(profile_keys_order))}
+            if partes[0] == email_usuario and len(partes) == len(ordem_lista) + 1:
+                try:
+                    return {ordem_lista[i]: int(partes[i+1]) for i in range(len(ordem_lista))}
+                except (ValueError, IndexError): 
+                    return None 
     return None
 
+# Função auxiliar para obter percentuais personalizados do usuário
+def percentuais_personalizados(tipos_ativos_para_personalizar): # Nome alterado
+    print("\nDigite os percentuais desejados (total deve ser 100%):")
+    while True:
+        nova_alocacao = {}
+        total_perc = 0.0
+        for tipo_ativo in tipos_ativos_para_personalizar:
+            while True:
+                perc_str = input(f"{tipo_ativo} (%): ").strip()
+                try:
+                    perc = float(perc_str)
+                    if 0 <= perc <= 100:
+                        nova_alocacao[tipo_ativo] = perc
+                        total_perc += perc
+                        break
+                    else:
+                        print("Percentual entre 0 e 100") 
+                except ValueError:
+                    print("Entrada inválida") 
+
+        if abs(total_perc - 100.0) < 0.01: 
+            return nova_alocacao
+        else:
+            print(f"\nA soma foi {total_perc:.2f}%. Deve ser 100%. Tente de novo\n")
+
+
 #mostra sugestões de alocação conforme o perfil e valor a investir
-def exibir_recomendacoes(perfil_num, perfil_str):
-    if perfil_num is None:
+def exibir_recomendacoes(perfil_nota, perfil_str):
+    if perfil_nota is None:
         print("Não é possível gerar recomendações sem um perfil definido")
         return
 
-    print(f"\nSeu Perfil de Investidor: {perfil_str} (Nível {perfil_num})")
+    print(f"\nSeu Perfil de Investidor: {perfil_str} (Nível {perfil_nota})")
 
     while True:
-        valor_aporte_str = input("Qual o valor que você pretende investir? R$ ")
+        valor_aporte_str = input("Qual o valor que você pretende investir? R$ ").strip() 
         try:
             valor_aporte = float(valor_aporte_str)
             if valor_aporte > 0: break
             print("Por favor, insira um valor positivo")
         except ValueError:
-             print("Valor inválido. Use números (ex: 1000.50)")
+            print("Valor inválido. Use números (ex: 1000.50)")
 
 
     alocacoes_padrao = {
@@ -279,7 +323,7 @@ def exibir_recomendacoes(perfil_num, perfil_str):
         4: {'Renda Fixa': 10, 'FIIs': 25, 'Ações': 35, 'Cripto': 20, 'Reserva de Emergência': 10},
         5: {'Renda Fixa': 5,  'FIIs': 20, 'Ações': 40, 'Cripto': 30, 'Reserva de Emergência': 5}
     }
-    alocacao_sugerida = alocacoes_padrao.get(perfil_num, {}).copy()
+    alocacao_sugerida = alocacoes_padrao.get(perfil_nota, {}).copy()
 
     print(f"\nSugestão de Alocação para R$ {valor_aporte:,.2f}:")
     if not alocacao_sugerida:
@@ -287,38 +331,22 @@ def exibir_recomendacoes(perfil_num, perfil_str):
         return
 
     for tipo, perc in alocacao_sugerida.items():
-        print(f"   - {tipo}: {perc}% -> R$ {valor_aporte * (perc/100):,.2f}")
+        print(f"    - {tipo}: {perc}% -> R$ {valor_aporte * (perc/100):,.2f}") 
 
-    time.sleep(3) # Adiciona um delay de 3 segundos
+    time.sleep(3) 
 
     if input("\nDeseja personalizar a alocação? (sim/não): ").strip().lower() == 'sim':
-        print("\nDigite os percentuais desejados (total deve ser 100%):")
-        while True:
-            nova_alocacao = {}
-            total_perc = 0.0
-            for tipo_ativo in alocacao_sugerida.keys():
-                while True:
-                    perc_str = input(f"{tipo_ativo} (%): ")
-                    try:
-                        perc = float(perc_str)
-                        if 0 <= perc <= 100:
-                            nova_alocacao[tipo_ativo] = perc
-                            total_perc += perc
-                            break
-                        else:
-                            print("Percentual entre 0 e 100")
-                    except ValueError:
-                        print("Entrada inválida")
+        tipos_para_personalizar = list(alocacao_sugerida.keys())
+        if tipos_para_personalizar:
+            alocacao_personalizada = percentuais_personalizados(tipos_para_personalizar) # Nome alterado na chamada
+            alocacao_sugerida = alocacao_personalizada 
+        else:
+            print("Não há tipos de ativos para personalizar neste perfil.")
 
-            if abs(total_perc - 100.0) > 0.01:
-                print(f"\nA soma foi {total_perc:.2f}%. Deve ser 100%. Tente de novo\n")
-            else:
-                alocacao_sugerida = nova_alocacao
-                break
 
-        print("\nAlocação final do seu aporte:")
-        for tipo, perc in alocacao_sugerida.items():
-            print(f"- {tipo}: {perc:.2f}% -> R$ {valor_aporte * (perc/100):,.2f}")
+    print("\nAlocação final do seu aporte:")
+    for tipo, perc in alocacao_sugerida.items():
+        print(f"- {tipo}: {perc:.2f}% -> R$ {valor_aporte * (perc/100):,.2f}")
 
 #Permite visualizar, atualizar perfil e ver recomendações
 def gerenciar_perfil_e_recomendacoes(email_usuario):
@@ -327,29 +355,31 @@ def gerenciar_perfil_e_recomendacoes(email_usuario):
     respostas_atuais = carregar_perfil_investidor(email_usuario)
 
     if respostas_atuais:
-        perfil_num, perfil_str = definir_perfil_investidor(respostas_atuais)
-        print(f"Seu perfil atual: {perfil_str} (Nível {perfil_num})")
+        perfil_nota, perfil_str = definir_perfil_investidor(respostas_atuais)
+        print(f"Seu perfil atual: {perfil_str} (Nível {perfil_nota})")
         print("Respostas fornecidas:")
-        for chave, valor in respostas_atuais.items(): print(f"   - {chave}: {valor}")
+        for chave, valor in respostas_atuais.items(): print(f"    - {chave}: {valor}") 
 
-        exibir_recomendacoes(perfil_num, perfil_str)
+        exibir_recomendacoes(perfil_nota, perfil_str)
 
         print("\nOpções:")
         print("1 - Atualizar meu perfil (refazer questionário)")
         print("2 - Voltar ao menu anterior")
-        if input("Escolha: ").strip() == '1':
+        escolha = input("Escolha: ").strip() 
+        if escolha == '1':
             novas_respostas = pedir_respostas_investidor()
             salvar_perfil_investidor(email_usuario, novas_respostas)
-            perfil_num_novo, perfil_str_novo = definir_perfil_investidor(novas_respostas)
-            exibir_recomendacoes(perfil_num_novo, perfil_str_novo)
+            perfil_nota_novo, perfil_str_novo = definir_perfil_investidor(novas_respostas)
+            exibir_recomendacoes(perfil_nota_novo, perfil_str_novo)
     else:
         print("Você ainda não tem um perfil de investidor")
         if input("Deseja criar um agora? (sim/não): ").strip().lower() == 'sim':
             respostas_novas = pedir_respostas_investidor()
             salvar_perfil_investidor(email_usuario, respostas_novas)
-            perfil_num_novo, perfil_str_novo = definir_perfil_investidor(respostas_novas)
-            exibir_recomendacoes(perfil_num_novo, perfil_str_novo)
+            perfil_nota_novo, perfil_str_novo = definir_perfil_investidor(respostas_novas)
+            exibir_recomendacoes(perfil_nota_novo, perfil_str_novo)
     pausar_e_limpar()
+
 
 #exclui o perfil de investidor do usuário
 def excluir_perfil_investidor_usuario(email_usuario):
@@ -367,13 +397,19 @@ def excluir_perfil_investidor_usuario(email_usuario):
         with open(arquivo_perfis, "r", encoding="utf-8") as arquivo:
             linhas_existentes = arquivo.readlines()
 
-        with open(arquivo_perfis, "w", encoding="utf-8") as arquivo:
-            for linha in linhas_existentes:
-                if not linha.startswith(email_usuario + ";"):
-                    arquivo.write(linha)
-                else:
-                    perfil_removido = True
-        print("Perfil de investidor excluído" if perfil_removido else "Perfil não encontrado")
+        linhas_para_manter = [] 
+        for linha in linhas_existentes:
+            if not linha.startswith(email_usuario + ";"):
+                linhas_para_manter.append(linha)
+            else:
+                perfil_removido = True
+        
+        if perfil_removido:
+            with open(arquivo_perfis, "w", encoding="utf-8") as arquivo:
+                arquivo.writelines(linhas_para_manter)
+            print("Perfil de investidor excluído")
+        else:
+            print("Perfil não encontrado") 
     else:
         print("Exclusão cancelada")
     pausar_e_limpar()
@@ -383,8 +419,8 @@ def excluir_perfil_investidor_usuario(email_usuario):
 
 #menu principal para usuários logados
 def menu_usuario_logado(email_usuario):
-    limpar_terminal()
     while True:
+        limpar_terminal() 
         print(f"--- Bem-vindo(a), {email_usuario}! ---")
         print("\nMenu Principal:")
         print("1 - Meu Perfil de Investidor e Recomendações")
@@ -392,21 +428,22 @@ def menu_usuario_logado(email_usuario):
         print("3 - Logout")
         opcao = input("Escolha uma opção: ").strip()
 
-        if opcao == "1": gerenciar_perfil_e_recomendacoes(email_usuario)
-        elif opcao == "2": excluir_perfil_investidor_usuario(email_usuario)
+        if opcao == "1": 
+            gerenciar_perfil_e_recomendacoes(email_usuario)
+        elif opcao == "2": 
+            excluir_perfil_investidor_usuario(email_usuario)
         elif opcao == "3":
             print("Fazendo logout...")
             time.sleep(1)
-            limpar_terminal()
-            break
+            break 
         else:
             print("Opção inválida")
             pausar_e_limpar()
 
 #menu inicial de autenticação do sistema
 def menu_principal_autenticacao():
-    limpar_terminal()
     while True:
+        limpar_terminal()
         print("Sistema de Análise de Perfil de Investidor")
         print("\nMenu de Autenticação:")
         print("1 - Login")
@@ -418,15 +455,17 @@ def menu_principal_autenticacao():
         if opcao == "1":
             email_logado = login()
             if email_logado:
-                pausar_e_limpar()
                 menu_usuario_logado(email_logado)
             else:
                 input("\nPressione Enter para voltar ao menu...")
-                limpar_terminal()
-        elif opcao == "2": cadastrar_usuario()
-        elif opcao == "3": redefinir_senha()
+        elif opcao == "2": 
+            cadastrar_usuario() 
+        elif opcao == "3": 
+            redefinir_senha() 
         elif opcao == "4":
             print("\nEncerrando o sistema... Até logo!")
+            time.sleep(1) 
+            limpar_terminal()
             break
         else:
             print("Opção inválida. Tente novamente")
