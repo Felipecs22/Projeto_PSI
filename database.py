@@ -9,7 +9,6 @@ def inicializar_db():
     """
     print("Inicializando banco de dados...")
     
-    # O 'try...finally' garante que a conexão será fechada mesmo se ocorrer um erro.
     conexao = sqlite3.connect(NOME_BANCO)
     cursor = conexao.cursor()
     try:
