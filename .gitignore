@@ -1,0 +1,14 @@
+# Arquivos de cache e compilados do Python
+# Isso evita que os arquivos .pyc e a pasta __pycache__ sejam enviados.
+__pycache__/
+*.pyc
+
+# Arquivos de banco de dados local
+# Isso garante que seu banco de dados pessoal com seus testes não seja compartilhado.
+*.db
+*.sqlite3
+
+# Arquivos de ambiente virtual (boa prática para o futuro)
+# Se um dia você usar um ambiente virtual, ele também será ignorado.
+.venv/
+venv/
