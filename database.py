@@ -50,7 +50,6 @@ def inicializar_db():
     finally:
         conexao.close()
 
-
 def adicionar_usuario(usuario: object):
     """Adiciona um novo objeto Usuario ao banco de dados."""
     conexao = sqlite3.connect(NOME_BANCO)
@@ -95,6 +94,71 @@ def buscar_usuario_por_email(email: str) -> Usuario | None:
             return Usuario(id=id_usuario, email=email_usuario, senha=senha_usuario)
         
         # Retorna None se o cursor.fetchone() não encontrou nenhum usuário
+        return None
+    finally:
+        conexao.close()
+
+def salvar_ou_atualizar_perfil(usuario_id: int, respostas: dict):
+    """
+    Salva ou atualiza o perfil de investidor de um usuário no banco de dados.
+    """
+    # Primeiro, verificamos se um perfil já existe para este usuário
+    perfil_existente = carregar_perfil(usuario_id)
+    
+    conexao = sqlite3.connect(NOME_BANCO)
+    cursor = conexao.cursor()
+    try:
+        # Extrai os valores do dicionário na ordem correta
+        tolerancia = respostas.get("Tolerancia ao risco")
+        experiencia = respostas.get("Experiencia")
+        liquidez = respostas.get("Necessidade de liquidez")
+
+        if perfil_existente:
+            # Se existe, fazemos UPDATE
+            print(f"Atualizando perfil para o usuário ID: {usuario_id}")
+            cursor.execute("""
+                UPDATE perfis 
+                SET tolerancia_risco = ?, experiencia = ?, necessidade_liquidez = ?
+                WHERE usuario_id = ?
+            """, (tolerancia, experiencia, liquidez, usuario_id))
+        else:
+            # Se não existe, fazemos INSERT
+            print(f"Criando novo perfil para o usuário ID: {usuario_id}")
+            cursor.execute("""
+                INSERT INTO perfis (usuario_id, tolerancia_risco, experiencia, necessidade_liquidez)
+                VALUES (?, ?, ?, ?)
+            """, (usuario_id, tolerancia, experiencia, liquidez))
+
+        conexao.commit()
+    finally:
+        conexao.close()
+
+def carregar_perfil(usuario_id: int) -> dict | None:
+    """
+    Carrega as respostas do perfil de um usuário do banco de dados.
+    Retorna um dicionário com as respostas ou None se não houver perfil.
+    """
+    conexao = sqlite3.connect(NOME_BANCO)
+    cursor = conexao.cursor()
+    try:
+        cursor.execute("""
+            SELECT tolerancia_risco, experiencia, necessidade_liquidez 
+            FROM perfis 
+            WHERE usuario_id = ?
+        """, (usuario_id,))
+        
+        resultado = cursor.fetchone()
+
+        if resultado:
+            # 'resultado' é uma tupla, ex: (4, 3, 5)
+            # Montamos o dicionário para devolver à aplicação
+            respostas = {
+                "Tolerancia ao risco": resultado[0],
+                "Experiencia": resultado[1],
+                "Necessidade de liquidez": resultado[2]
+            }
+            return respostas
+        
         return None
     finally:
         conexao.close()
