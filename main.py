@@ -1,5 +1,3 @@
-# Em main.py (Versão Final OOP)
-
 # 1. Importações dos nossos módulos e de bibliotecas
 import database
 from models import Usuario
