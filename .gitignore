@@ -12,3 +12,5 @@ __pycache__/
 # Se um dia você usar um ambiente virtual, ele também será ignorado.
 .venv/
 venv/
+
+.env
