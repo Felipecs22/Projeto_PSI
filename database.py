@@ -162,3 +162,34 @@ def carregar_perfil(usuario_id: int) -> dict | None:
         return None
     finally:
         conexao.close()
+
+def atualizar_senha(email: str, nova_senha_hash: str):
+    """Atualiza a senha de um usuário existente, identificado pelo e-mail."""
+    conexao = sqlite3.connect(NOME_BANCO)
+    cursor = conexao.cursor()
+    try:
+        cursor.execute("UPDATE usuarios SET senha_hash = ? WHERE email = ?", (nova_senha_hash, email))
+        conexao.commit()
+        print(f"Senha para o usuário {email} foi atualizada no banco de dados.")
+    finally:
+        conexao.close()
+
+def excluir_perfil(usuario_id: int) -> bool:
+    """Exclui o perfil de investidor de um usuário do banco de dados."""
+    conexao = sqlite3.connect(NOME_BANCO)
+    cursor = conexao.cursor()
+    try:
+        # O comando DELETE FROM remove as linhas que correspondem à cláusula WHERE
+        cursor.execute("DELETE FROM perfis WHERE usuario_id = ?", (usuario_id,))
+        conexao.commit()
+        
+        # A propriedade cursor.rowcount nos diz quantas linhas foram afetadas (deletadas).
+        # Se for maior que 0, a exclusão foi bem-sucedida.
+        if cursor.rowcount > 0:
+            print(f"Perfil do usuário ID {usuario_id} foi excluído do banco de dados.")
+            return True
+        else:
+            print(f"Nenhum perfil encontrado para o usuário ID {usuario_id} para excluir.")
+            return False
+    finally:
+        conexao.close()

@@ -1,4 +1,4 @@
-# 1. Importações dos nossos módulos e de bibliotecas
+# 1. Importações 
 import database
 from models import Usuario, NichoInvestimento, AvaliadorPerfil
 from utils import limpar_terminal, pausar_e_limpar, gerar_hash_senha
@@ -75,6 +75,69 @@ class InvestiMatchApp:
         else:
             print("\nEmail ou senha inválidos.")
             pausar_e_limpar()
+
+    def processar_recuperacao_senha(self):
+        """Gerencia o fluxo de recuperação de senha do usuário."""
+        limpar_terminal()
+        print("--- Recuperação de Conta ---")
+        email = input("Digite o e-mail da conta que deseja recuperar: ").strip().lower()
+
+        # 1. Verifica se o usuário realmente existe
+        if not self.db.verificar_email_existe(email):
+            print("\nE-mail não encontrado no nosso sistema.")
+            pausar_e_limpar()
+            return
+
+        # 2. Gera e envia o código de recuperação via e-mail
+        codigo_recuperacao = random.randint(100000, 999999)
+        assunto = "InvestiMatch - Código de Recuperação de Senha"
+        conteudo = f"Seu código para redefinir sua senha é: {codigo_recuperacao}"
+        
+        email_enviado = self.servico_email.enviar_email(email, assunto, conteudo)
+
+        if not email_enviado:
+            print("\nFalha ao enviar o e-mail de recuperação. Tente novamente mais tarde.")
+            pausar_e_limpar()
+            return
+
+        # 3. Pede ao usuário o código recebido e a nova senha
+        codigo_digitado = input("Digite o código de recuperação enviado para seu e-mail: ").strip()
+
+        if codigo_digitado == str(codigo_recuperacao):
+            print("\nCódigo verificado com sucesso. Agora, crie sua nova senha.")
+            nova_senha = input("Digite sua nova senha: ").strip()
+            
+            # 4. Hasheia a nova senha e manda o banco de dados atualizar
+            novo_hash = gerar_hash_senha(nova_senha)
+            self.db.atualizar_senha(email, novo_hash)
+            
+            print("\nSenha redefinida com sucesso!")
+        else:
+            print("\nCódigo incorreto. A operação foi cancelada por segurança.")
+
+        pausar_e_limpar()
+    
+    def processar_exclusao_perfil(self):
+        """Gerencia o fluxo para excluir o perfil de investidor do usuário logado."""
+        limpar_terminal()
+        print("--- Excluir Perfil de Investidor ---")
+        print("\n ATENÇÃO: Esta ação é permanente e não pode ser desfeita.")
+        
+        # Pedimos uma confirmação clara do usuário
+        confirmacao = input("Você tem certeza que deseja excluir seu perfil? (s/n): ").strip().lower()
+
+        if confirmacao == 's':
+            # Chama a função do banco de dados para fazer a exclusão
+            sucesso = self.db.excluir_perfil(self.usuario_logado.id)
+            
+            if sucesso:
+                print("\nSeu perfil de investidor foi excluído com sucesso.")
+            else:
+                print("\nVocê não possuía um perfil para ser excluído.")
+        else:
+            print("\nOperação de exclusão cancelada.")
+
+        pausar_e_limpar()
 
     def _pedir_respostas_investidor(self) -> dict:
         """
@@ -176,19 +239,20 @@ class InvestiMatchApp:
             print(f"--- Área do Investidor: {self.usuario_logado.email} ---")
             print("\n1 - Ver/Refazer meu Perfil de Investidor")
             print("2 - Ver Recomendações de Investimento")
-            print("3 - Logout")
+            print("3 - Excluir meu Perfil de Investidor") 
+            print("4 - Logout")                        
             opcao = input("Escolha uma opção: ").strip()
 
             if opcao == '1':
                 self.gerenciar_perfil()
             elif opcao == '2':
                 self.exibir_recomendacoes()
-            elif opcao == '3':
-                # Implementando o Logout
-                print(f"\nFazendo logout de {self.usuario_logado.email}...")
-                self.usuario_logado = None # Limpa o estado do usuário logado
+            elif opcao == '3': 
+                self.processar_exclusao_perfil()
+            elif opcao == '4': 
+                self.usuario_logado = None 
                 pausar_e_limpar()
-                break # Quebra o loop do menu logado, retornando ao menu principal
+                break 
             else:
                 print("\nOpção inválida.")
                 pausar_e_limpar()
@@ -201,15 +265,17 @@ class InvestiMatchApp:
             limpar_terminal()
             print("--- Bem-vindo ao InvestiMatch! ---")
             print("1 - Fazer Login")
-            print("2 - Cadastrar-se")
-            print("3 - Sair")
+            print("3 - Recuperar Conta") 
+            print("4 - Sair")           
             opcao = input("Escolha uma opção: ").strip()
 
             if opcao == '1':
                 self.processar_login()
             elif opcao == '2':
                 self.processar_cadastro()
-            elif opcao == '3':
+            elif opcao == '3':          
+                self.processar_recuperacao_senha()
+            elif opcao == '4':         
                 print("\nEncerrando o sistema... Até logo!")
                 break
             else:
@@ -219,5 +285,5 @@ class InvestiMatchApp:
 
 # 3. Ponto de Partida da Aplicação
 if __name__ == "__main__":
-    investimatch = InvestiMatchApp()  # Cria uma instância da nossa aplicação
-    investimatch.menu_inicial()           # Roda o método principal
+    investimatch = InvestiMatchApp()  
+    investimatch.menu_inicial()           
