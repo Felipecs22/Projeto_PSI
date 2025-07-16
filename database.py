@@ -1,3 +1,4 @@
+import datetime
 import sqlite3
 from models import Usuario
 NOME_BANCO = "investimatch.db"
@@ -39,6 +40,7 @@ def inicializar_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             usuario_id INTEGER NOT NULL,
             nome_ativo TEXT NOT NULL,
+            nicho TEXT NOT NULL, 
             valor_aportado REAL NOT NULL,
             data_aporte TEXT NOT NULL,
             FOREIGN KEY (usuario_id) REFERENCES usuarios (id)
@@ -174,22 +176,77 @@ def atualizar_senha(email: str, nova_senha_hash: str):
     finally:
         conexao.close()
 
-def excluir_perfil(usuario_id: int) -> bool:
-    """Exclui o perfil de investidor de um usuário do banco de dados."""
+def excluir_conta(usuario_id: int) -> bool:
+    """
+    Exclui todos os dados de um usuário (perfil, investimentos e a própria conta)
+    do banco de dados.
+    """
     conexao = sqlite3.connect(NOME_BANCO)
     cursor = conexao.cursor()
     try:
-        # O comando DELETE FROM remove as linhas que correspondem à cláusula WHERE
+        # É crucial executar as exclusões nesta ordem
+        
+        # 1. Deleta o perfil do investidor
         cursor.execute("DELETE FROM perfis WHERE usuario_id = ?", (usuario_id,))
+        
+        # 2. Deleta os investimentos registrados
+        cursor.execute("DELETE FROM investimentos WHERE usuario_id = ?", (usuario_id,))
+        
+        # 3. Por último, deleta o usuário
+        cursor.execute("DELETE FROM usuarios WHERE id = ?", (usuario_id,))
+        
         conexao.commit()
         
-        # A propriedade cursor.rowcount nos diz quantas linhas foram afetadas (deletadas).
-        # Se for maior que 0, a exclusão foi bem-sucedida.
         if cursor.rowcount > 0:
-            print(f"Perfil do usuário ID {usuario_id} foi excluído do banco de dados.")
+            print(f"Conta completa do usuário ID {usuario_id} foi excluída do banco.")
             return True
         else:
-            print(f"Nenhum perfil encontrado para o usuário ID {usuario_id} para excluir.")
+            # Isso não deveria acontecer se a função for chamada para um usuário logado
+            print(f"Nenhuma conta encontrada para o usuário ID {usuario_id}.")
             return False
+            
     finally:
         conexao.close()
+
+def adicionar_investimento(usuario_id: int, nome_ativo: str, nicho: str, valor_aportado: float):
+        conexao = sqlite3.connect(NOME_BANCO)
+        cursor = conexao.cursor()
+        try:
+            data_atual = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            cursor.execute("""
+                INSERT INTO investimentos (usuario_id, nome_ativo, nicho, valor_aportado, data_aporte)
+                VALUES (?, ?, ?, ?, ?)
+            """, (usuario_id, nome_ativo, nicho, valor_aportado, data_atual))
+            conexao.commit()
+            print(f"Investimento em {nome_ativo} de R$ {valor_aportado:.2f} registrado com sucesso.")
+        finally:
+            conexao.close()
+
+def sumarizar_investimentos_por_ativo(usuario_id: int) -> list:
+        conexao = sqlite3.connect(NOME_BANCO)
+        conexao.row_factory = sqlite3.Row
+        cursor = conexao.cursor()
+        try:
+            cursor.execute("""
+                SELECT nome_ativo, nicho, SUM(valor_aportado) as total_investido
+                FROM investimentos
+                WHERE usuario_id = ?
+                GROUP BY nome_ativo, nicho
+                ORDER BY total_investido DESC
+            """, (usuario_id,))
+            resultados = cursor.fetchall()
+            return [dict(row) for row in resultados]
+        finally:
+            conexao.close()
+
+def carregar_investimentos_do_usuario(usuario_id: int) -> list:
+    conexao = sqlite3.connect(NOME_BANCO)
+    conexao.row_factory = sqlite3.Row 
+    cursor = conexao.cursor()
+    try:
+        cursor.execute("SELECT nome_ativo, valor_aportado, data_aporte FROM investimentos WHERE usuario_id = ?", (usuario_id,))
+        resultados = cursor.fetchall() 
+        return [dict(row) for row in resultados]
+    finally:
+        conexao.close()
+

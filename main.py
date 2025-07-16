@@ -117,27 +117,33 @@ class InvestiMatchApp:
 
         pausar_e_limpar()
     
-    def processar_exclusao_perfil(self):
-        """Gerencia o fluxo para excluir o perfil de investidor do usuário logado."""
+    def processar_exclusao_conta(self):
+        """Gerencia o fluxo para excluir a conta inteira do usuário logado."""
         limpar_terminal()
-        print("--- Excluir Perfil de Investidor ---")
-        print("\n ATENÇÃO: Esta ação é permanente e não pode ser desfeita.")
+        print("--- Excluir Minha Conta ---")
+        print("\nATENÇÃO! ESTA AÇÃO É IRREVERSÍVEL! ")
+        print("Todos os seus dados, incluindo login, perfil e investimentos registrados, serão apagados permanentemente.")
         
-        # Pedimos uma confirmação clara do usuário
-        confirmacao = input("Você tem certeza que deseja excluir seu perfil? (s/n): ").strip().lower()
+        confirmacao = input("Digite 'excluir' para confirmar a exclusão da sua conta: ").strip()
 
-        if confirmacao == 's':
-            # Chama a função do banco de dados para fazer a exclusão
-            sucesso = self.db.excluir_perfil(self.usuario_logado.id)
+        if confirmacao.lower() == 'excluir':
+            print("\nConfirmado. Excluindo sua conta...")
+            
+            sucesso = self.db.excluir_conta(self.usuario_logado.id)
             
             if sucesso:
-                print("\nSeu perfil de investidor foi excluído com sucesso.")
+                print("Sua conta foi excluída com sucesso.")
+                # Força o logout, já que o usuário não existe mais
+                self.usuario_logado = None
             else:
-                print("\nVocê não possuía um perfil para ser excluído.")
+                # Caso raro, mas para segurança
+                print("Não foi possível excluir a conta.")
         else:
             print("\nOperação de exclusão cancelada.")
 
         pausar_e_limpar()
+        # A função retornará para o menu_usuario_logado, que verá que o
+        # usuario_logado é None e sairá do loop.
 
     def _pedir_respostas_investidor(self) -> dict:
         """
@@ -231,28 +237,115 @@ class InvestiMatchApp:
         
         pausar_e_limpar()
 
-    def menu_usuario_logado(self):
-        """Mostra o menu de opções para um usuário que está logado."""
+    def gerenciar_investimentos(self):
+        """Mostra o sub-menu para gerenciar os investimentos do usuário."""
+        while True:
+            limpar_terminal()
+            print("--- Meus Investimentos ---")
+            print("1 - Registrar novo aporte")
+            print("2 - Ver resumo de investimentos")
+            print("3 - Ver histórico de aportes")
+            print("4 - Voltar ao menu anterior")
+            opcao = input("Escolha uma opção: ").strip()
+
+            if opcao == '1':
+                self.processar_novo_aporte()
+            elif opcao == '2':
+                self.visualizar_resumo_investimentos()
+            elif opcao == '3':
+                self.visualizar_historico_aportes()
+            elif opcao == '4':
+                break
+            else:
+                print("\nOpção inválida.")
+                pausar_e_limpar()
+
+    def processar_novo_aporte(self):
+        """Processa o registro de um novo investimento (aporte)."""
         limpar_terminal()
+        print("--- Registrar Novo Aporte ---")
+        nome_ativo = input("Digite o nome do ativo específico (ex: Bitcoin, Ação da Petrobras): ").strip()
+        nicho = input("Digite o nicho/categoria deste ativo (ex: Cripto, Ações, Renda Fixa): ").strip()
         
         while True:
+            try:
+                valor_str = input("Digite o valor aportado (ex: 1500.50): R$ ").strip()
+                valor_aportado = float(valor_str)
+                break
+            except ValueError:
+                print("Valor inválido. Por favor, use números e ponto para decimais.")
+        
+        self.db.adicionar_investimento(self.usuario_logado.id, nome_ativo, nicho, valor_aportado)
+        pausar_e_limpar()
+
+    def visualizar_resumo_investimentos(self):
+        """Busca e exibe o resumo dos investimentos, agrupados por ativo."""
+        limpar_terminal()
+        print("--- Resumo de Investimentos ---")
+        
+        resumo = self.db.sumarizar_investimentos_por_ativo(self.usuario_logado.id)
+        
+        if not resumo:
+            print("\nVocê ainda não registrou nenhum investimento.")
+        else:
+            print(f"\n{'Ativo':<30} {'Nicho (Categoria)':<25} {'Valor Investido (R$)'}")
+            print("-" * 75)
+            total_geral = 0
+            for item in resumo:
+                total = item['total_investido']
+                total_geral += total
+                print(f"{item['nome_ativo']:<30} {item['nicho']:<25} {total:,.2f}")
+            
+            print("-" * 75)
+            print(f"{'VALOR TOTAL GERAL:':<56} {total_geral:,.2f}")
+            print("-" * 75)
+            
+        pausar_e_limpar()
+
+    def visualizar_historico_aportes(self):
+        """Busca e exibe o histórico completo de todos os aportes."""
+        limpar_terminal()
+        print("--- Histórico de Aportes ---")
+        
+        historico = self.db.carregar_investimentos_do_usuario(self.usuario_logado.id)
+        
+        if not historico:
+            print("\nVocê ainda não registrou nenhum investimento.")
+        else:
+            print(f"\n{'Data e Hora':<25} {'Ativo':<30} {'Valor (R$)'}")
+            print("-" * 75)
+            for aporte in historico:
+                print(f"{aporte['data_aporte']:<25} {aporte['nome_ativo']:<30} {aporte['valor_aportado']:,.2f}")
+            print("-" * 75)
+            
+        pausar_e_limpar()
+
+    def menu_usuario_logado(self):
+        while True:
+            limpar_terminal()
             print(f"--- Área do Investidor: {self.usuario_logado.email} ---")
             print("\n1 - Ver/Refazer meu Perfil de Investidor")
             print("2 - Ver Recomendações de Investimento")
-            print("3 - Excluir meu Perfil de Investidor") 
-            print("4 - Logout")                        
+            print("3 - Meus Investimentos")
+            print("4 - Excluir Minha Conta")
+            print("5 - Logout")
             opcao = input("Escolha uma opção: ").strip()
 
             if opcao == '1':
                 self.gerenciar_perfil()
             elif opcao == '2':
                 self.exibir_recomendacoes()
-            elif opcao == '3': 
-                self.processar_exclusao_perfil()
-            elif opcao == '4': 
-                self.usuario_logado = None 
+            elif opcao == '3':
+                self.gerenciar_investimentos()
+            elif opcao == '4':
+                self.processar_exclusao_conta()
+                if not self.usuario_logado:
+                    break
+            elif opcao == '5':
+                print(f"\nFazendo logout de {self.usuario_logado.email}...")
+                self.usuario_logado = None
                 pausar_e_limpar()
-                break 
+                break
             else:
                 print("\nOpção inválida.")
                 pausar_e_limpar()
@@ -265,17 +358,18 @@ class InvestiMatchApp:
             limpar_terminal()
             print("--- Bem-vindo ao InvestiMatch! ---")
             print("1 - Fazer Login")
-            print("3 - Recuperar Conta") 
-            print("4 - Sair")           
+            print("2 - Cadastrar-se")          
+            print("3 - Recuperar Conta")
+            print("4 - Sair")
             opcao = input("Escolha uma opção: ").strip()
 
             if opcao == '1':
                 self.processar_login()
-            elif opcao == '2':
+            elif opcao == '2':                
                 self.processar_cadastro()
-            elif opcao == '3':          
+            elif opcao == '3':
                 self.processar_recuperacao_senha()
-            elif opcao == '4':         
+            elif opcao == '4':
                 print("\nEncerrando o sistema... Até logo!")
                 break
             else:
