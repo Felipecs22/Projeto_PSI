@@ -15,6 +15,19 @@ class Usuario:
     def __str__(self):
         return f"Usuário(id={self.id}, email='{self.email}')"
     
+class Carteira:
+    """Representa uma carteira (ou portfólio) de investimentos de um usuário."""
+    def __init__(self, nome: str, usuario_id: int, id: int = None):
+        # O 'id' é opcional, pois ele só existe depois que a carteira é salva no banco
+        self.id = id
+        self.nome = nome
+        self.usuario_id = usuario_id
+
+    def __str__(self):
+        """Define como o objeto Carteira será exibido ao ser 'printado'."""
+        return f"Carteira(id={self.id}, nome='{self.nome}')"
+
+    
 class NichoInvestimento:
     """Representa um nicho de investimento com suas características intrínsecas."""
     def __init__(self, nome: str, risco: int, experiencia: int, liquidez: int):
