@@ -11,11 +11,10 @@ def pausar_e_limpar():
     limpar_terminal()
 
 def gerar_hash_senha(senha: str) -> str:
-    """Gera um hash SHA-256 para uma senha fornecida."""
-    # .encode('utf-8') converte a string em bytes, que é o que o hash precisa
+    """gera um hash SHA-256 para uma senha fornecida."""
     senha_em_bytes = senha.encode('utf-8')
     
-    # Cria o objeto hash usando o algoritmo SHA-256
+    # cria o objeto hash usando o algoritmo SHA-256
     hash_obj = hashlib.sha256(senha_em_bytes)
     
     # .hexdigest() converte o resultado em uma string hexadecimal legível

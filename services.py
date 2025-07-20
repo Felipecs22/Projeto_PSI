@@ -3,14 +3,15 @@ from email.message import EmailMessage
 import os
 from dotenv import load_dotenv
 
-# Carrega as variáveis do arquivo .env para o ambiente do sistema
+# carrega as variáveis do arquivo .env para o ambiente do sistema
 load_dotenv()
 
-# Pega as variáveis do ambiente. Usa um valor padrão '' caso não encontre.
+# pegando as variáveis 
 EMAIL_REMETENTE = os.getenv("EMAIL_REMETENTE", "")
 SENHA_APP = os.getenv("SENHA_APP", "")
+
 class ServicoEmail:
-    """Responsável por encapsular toda a lógica de envio de e-mails."""
+    """ classe com a lógica de envio de emails"""
     def __init__(self):
         self.remetente = EMAIL_REMETENTE
         self.senha = SENHA_APP
