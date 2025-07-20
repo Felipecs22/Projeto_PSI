@@ -313,3 +313,44 @@ def carregar_historico_da_carteira(carteira_id: int) -> list:
         return [dict(row) for row in resultados]
     finally:
         conexao.close()
+
+def excluir_carteira(carteira_id: int) -> bool:
+    """Exclui uma carteira e todos os investimentos associados a ela."""
+    conexao = sqlite3.connect(NOME_BANCO)
+    cursor = conexao.cursor()
+    try:
+        # Graças ao "ON DELETE CASCADE", ao deletar a carteira,
+        # o banco de dados deletará automaticamente todos os investimentos
+        # que tinham a carteira_id correspondente.
+        cursor.execute("DELETE FROM carteiras WHERE id = ?", (carteira_id,))
+        conexao.commit()
+        if cursor.rowcount > 0:
+            print(f"Carteira ID {carteira_id} e seus investimentos foram excluídos.")
+            return True
+        else:
+            print(f"Nenhuma carteira com ID {carteira_id} foi encontrada.")
+            return False
+    finally:
+        conexao.close()
+
+def buscar_nicho_por_nome_ativo(carteira_id: int, nome_ativo: str) -> str | None:
+        """
+        Busca o nicho de um ativo que já existe na carteira.
+        Retorna o nome do nicho (str) ou None se o ativo não for encontrado.
+        """
+        conexao = sqlite3.connect(NOME_BANCO)
+        cursor = conexao.cursor()
+        try:
+            # Usamos LOWER() para fazer a busca sem diferenciar maiúsculas/minúsculas
+            cursor.execute("""
+                SELECT nicho FROM investimentos 
+                WHERE carteira_id = ? AND LOWER(nome_ativo) = LOWER(?)
+                LIMIT 1 
+            """, (carteira_id, nome_ativo))
+            resultado = cursor.fetchone()
+            
+            if resultado:
+                return resultado[0] # Retorna o primeiro (e único) item da tupla, que é o nome do nicho
+            return None
+        finally:
+            conexao.close()

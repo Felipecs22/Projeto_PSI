@@ -26,7 +26,8 @@ class InvestiMatchApp:
             pausar_e_limpar()
             return
 
-        senha = input("Crie sua senha: ").strip()
+        
+        senha = self._pedir_e_validar_senha("Crie sua nova senha")
 
         codigo_verificacao = random.randint(100000, 999999)
         assunto = "InvestiMatch - Código de Verificação"
@@ -106,7 +107,7 @@ class InvestiMatchApp:
         if codigo_digitado == str(codigo_recuperacao):
             print("\nCódigo verificado com sucesso. Agora, crie sua nova senha.")
             requisitos = "(Mínimo 8 caracteres, com letras maiúsculas, minúsculas e números)"
-            nova_senha = input(f"Digite sua nova senha {requisitos}: ").strip()
+            nova_senha = self._pedir_e_validar_senha("Digite sua nova senha")
             
             # 4. Hasheia a nova senha e manda o banco de dados atualizar
             novo_hash = gerar_hash_senha(nova_senha)
@@ -117,6 +118,35 @@ class InvestiMatchApp:
             print("\nCódigo incorreto. A operação foi cancelada por segurança.")
 
         pausar_e_limpar()
+
+    def _pedir_e_validar_senha(self, prompt: str) -> str:
+        """
+        Pede uma senha válida ao usuário 
+        """
+        requisitos = "(Mínimo 8 caracteres, com maiúsculas, minúsculas e números)"
+        print(f"\n{prompt}: {requisitos}")
+        
+        while True:
+            senha = input("Digite a senha: ").strip()
+
+            if len(senha) < 8:
+                print("ERRO: A senha deve ter pelo menos 8 caracteres.")
+                continue
+            if not any(c.isupper() for c in senha):
+                print("ERRO: A senha deve conter pelo menos uma letra maiúscula.")
+                continue
+            if not any(c.islower() for c in senha):
+                print("ERRO: A senha deve conter pelo menos uma letra minúscula.")
+                continue
+            if not any(c.isdigit() for c in senha):
+                print("ERRO: A senha deve conter pelo menos um número.")
+                continue
+
+            senha_confirmada = input("Confirme a senha: ").strip()
+            if senha == senha_confirmada:
+                return senha 
+            else:
+                print("ERRO: As senhas não coincidem. Tente novamente.")
     
     def processar_exclusao_conta(self):
         """Gerencia o fluxo para excluir a conta inteira do usuário logado."""
@@ -143,8 +173,6 @@ class InvestiMatchApp:
             print("\nOperação de exclusão cancelada.")
 
         pausar_e_limpar()
-        # A função retornará para o menu_usuario_logado, que verá que o
-        # usuario_logado é None e sairá do loop.
 
     def _pedir_respostas_investidor(self) -> dict:
         """
@@ -240,51 +268,57 @@ class InvestiMatchApp:
 
     def gerenciar_investimentos(self):
         """Método principal que lista carteiras e direciona para criação ou gerenciamento."""
-        limpar_terminal()
-        print("--- Gerenciador de Carteiras ---")
         
-        # Busca todas as carteiras do usuário logado
-        carteiras = self.db.listar_carteiras_do_usuario(self.usuario_logado.id)
+        while True:
+            limpar_terminal()
+            print("--- Gerenciador de Investimentos ---")
+            
+            # Busca todas as carteiras do usuário logado
+            carteiras = self.db.listar_carteiras_do_usuario(self.usuario_logado.id)
 
-        if not carteiras:
-            print("\nVocê ainda não tem nenhuma carteira de investimentos.")
-        else:
-            print("\nSuas carteiras:")
-            for carteira in carteiras:
-                print(f"  - {carteira.nome} (ID: {carteira.id})")
-
-        print("\nOpções:")
-        print("1 - Criar nova carteira")
-        print("2 - Gerenciar uma carteira existente")
-        print("3 - Voltar")
-        opcao = input("Escolha uma opção: ").strip()
-
-        if opcao == '1':
-            self.processar_nova_carteira()
-        elif opcao == '2':
             if not carteiras:
-                print("\nVocê precisa criar uma carteira primeiro.")
-                pausar_e_limpar()
+                print("\nVocê ainda não tem nenhuma carteira de investimentos. Selecione a opção '1' para criar sua primeira!")
             else:
-                self.selecionar_carteira_para_gerenciar(carteiras)
-        elif opcao == '3':
-            return # Apenas retorna ao menu anterior
-        else:
-            print("Opção inválida.")
-            pausar_e_limpar()
+                print("\nSuas carteiras:")
+                for carteira in carteiras:
+                    print(f"  - {carteira.nome} (ID: {carteira.id})")
+
+            print("\nOpções:")
+            print("1 - Criar nova carteira")
+            print("2 - Gerenciar uma carteira existente")
+            print("3 - Excluir uma carteira") 
+            print("4 - Voltar")               
+            opcao = input("Escolha uma opção: ").strip()
+
+            if opcao == '1':
+                self.processar_nova_carteira()
+            elif opcao == '2':
+                if not carteiras: print("\nVocê precisa criar uma carteira primeiro."); pausar_e_limpar()
+                else: self.selecionar_carteira_para_gerenciar(carteiras)
+            elif opcao == '3':
+                if not carteiras: print("\nNão há carteiras para excluir."); pausar_e_limpar()
+                else: self.processar_exclusao_carteira(carteiras)
+            elif opcao == '4':
+                break
+            else:
+                print("Opção inválida.")
+                pausar_e_limpar()
 
     def processar_nova_carteira(self):
-        """Processa a criação de uma nova carteira."""
+        """Processa a criação de uma nova carteira com validação de input."""
         limpar_terminal()
         print("--- Criar Nova Carteira ---")
-        nome_carteira = input("Digite o nome para a nova carteira (ex: Aposentadoria): ").strip()
-        if nome_carteira:
-            # Usa o modelo para criar um objeto Carteira
-            nova_carteira = Carteira(nome=nome_carteira, usuario_id=self.usuario_logado.id)
-            # Usa o banco de dados para salvar
-            self.db.criar_carteira(nova_carteira)
-        else:
-            print("O nome não pode ser vazio.")
+        
+        while True:
+            nome_carteira = input("Digite o nome para a nova carteira (ex: Aposentadoria): ").strip()
+            if nome_carteira: # Se o nome não for uma string vazia
+                break # Sai do loop, pois o nome é válido
+            else:
+                print("ERRO: O nome da carteira não pode ser vazio. Tente novamente.")
+        
+        # O código só continua daqui quando um nome válido for inserido
+        nova_carteira = Carteira(nome=nome_carteira, usuario_id=self.usuario_logado.id)
+        self.db.criar_carteira(nova_carteira)
         pausar_e_limpar()
 
     def selecionar_carteira_para_gerenciar(self, carteiras):
@@ -310,62 +344,128 @@ class InvestiMatchApp:
             limpar_terminal()
             print(f"--- Gerenciando a Carteira: '{carteira.nome}' ---")
             print("1 - Registrar novo aporte nesta carteira")
-            print("2 - Ver resumo desta carteira")
-            print("3 - Ver histórico de aportes desta carteira")
-            print("4 - Voltar para o gerenciador de carteiras")
+            print("2 - Registrar retirada nesta carteira") # <- NOVA OPÇÃO
+            print("3 - Ver resumo desta carteira")
+            print("4 - Ver histórico de aportes desta carteira")
+            print("5 - Voltar")
             opcao = input("Escolha uma opção: ").strip()
 
             if opcao == '1':
                 self.processar_novo_aporte(carteira.id)
             elif opcao == '2':
-                self.visualizar_resumo_investimentos(carteira.id)
+                self.processar_nova_retirada(carteira.id)
             elif opcao == '3':
-                self.visualizar_historico_aportes(carteira.id)
+                self.visualizar_resumo_investimentos(carteira.id)
             elif opcao == '4':
+                self.visualizar_historico_aportes(carteira.id)
+            elif opcao == '5':
                 break
             else:
                 print("\nOpção inválida.")
                 pausar_e_limpar()
 
     def processar_novo_aporte(self, carteira_id: int):
-        """Processa o registro de um novo aporte para uma carteira específica."""
+        """Processa o registro de um novo aporte com validação de inputs."""
         limpar_terminal()
         print("--- Registrar Novo Aporte ---")
-        nome_ativo = input("Digite o nome do ativo específico (ex: Bitcoin, Ação da Petrobras): ").strip()
-        nicho = input("Digite o nicho/categoria deste ativo (ex: Cripto, Ações, Renda Fixa): ").strip()
+        
+        while True:
+            nome_ativo = input("Digite o nome do ativo específico (ex: Bitcoin, Ação da Petrobras): ").strip()
+            if nome_ativo:
+                break
+            print("ERRO: O nome do ativo não pode ser vazio.")
+        
+        while True:
+            nicho = input("Digite o nicho/categoria deste ativo (ex: Cripto, Ações, Renda Fixa): ").strip()
+            if nicho:
+                break
+            print("ERRO: O nicho não pode ser vazio.")
+
         while True:
             try:
                 valor_str = input("Digite o valor aportado (ex: 1500.50): R$ ").strip()
                 valor_aportado = float(valor_str)
-                break
+                if valor_aportado > 0:
+                    break
+                else:
+                    print("ERRO: O valor deve ser positivo.")
             except ValueError:
-                print("Valor inválido. Por favor, use números e ponto para decimais.")
-        self.db.adicionar_investimento(carteira_id, nome_ativo, nicho, valor_aportado) # Note que a função foi atualizada
+                print("ERRO: Valor inválido. Por favor, use números e ponto para decimais.")
+        
+        self.db.adicionar_investimento(carteira_id, nome_ativo, nicho, valor_aportado)
         pausar_e_limpar()
 
+    def processar_nova_retirada(self, carteira_id: int):
+        """Processa o registro de uma retirada, mostrando o resumo e inferindo o nicho."""
+        limpar_terminal()
+        print("--- Registrar Nova Retirada ---")
+        
+        # 1. Mostra o resumo para dar contexto ao usuário
+        print("Este é o resumo atual da sua carteira:")
+        resumo_atual = self.db.sumarizar_investimentos_por_ativo(carteira_id)
+        self._exibir_tabela_resumo(resumo_atual)
+
+        if not resumo_atual:
+             pausar_e_limpar()
+             return
+
+        # 2. Pede o nome do ativo e valida se ele existe
+        while True:
+            nome_ativo = input("\nDe qual ativo você retirou o valor (digite o nome exato)? ").strip()
+            if not nome_ativo:
+                print("ERRO: O nome não pode ser vazio.")
+                continue
+
+            # 3. Busca o nicho automaticamente!
+            nicho_encontrado = self.db.buscar_nicho_por_nome_ativo(carteira_id, nome_ativo)
+            
+            if nicho_encontrado:
+                print(f"-> Ativo encontrado no nicho: '{nicho_encontrado}'")
+                break
+            else:
+                print(f"ERRO: Ativo '{nome_ativo}' não encontrado nesta carteira. Verifique o nome e tente novamente.")
+
+        # 4. Pede o valor a ser retirado
+        while True:
+            try:
+                valor_str = input("Digite o valor retirado (ex: 250.00): R$ ").strip()
+                valor_retirado = float(valor_str)
+                if valor_retirado > 0: break
+                else: print("ERRO: O valor deve ser positivo.")
+            except ValueError:
+                print("ERRO: Valor inválido.")
+        
+        # 5. Registra o investimento com valor negativo
+        valor_negativo = -abs(valor_retirado)
+        self.db.adicionar_investimento(carteira_id, nome_ativo, nicho_encontrado, valor_negativo)
+        pausar_e_limpar()
+    
+    def _exibir_tabela_resumo(self, resumo_dados: list):
+        """Método interno que recebe dados de resumo e os exibe em formato de tabela."""
+        if not resumo_dados:
+            print("\nNenhum investimento registrado nesta carteira.")
+            return
+
+        print(f"\n{'Ativo':<30} {'Nicho (Categoria)':<25} {'Valor Investido (R$)'}")
+        print("-" * 75)
+        total_geral = 0
+        for item in resumo_dados:
+            total = item['total_investido']
+            total_geral += total
+            print(f"{item['nome_ativo']:<30} {item['nicho']:<25} {total:,.2f}")
+        
+        print("-" * 75)
+        print(f"{'VALOR TOTAL GERAL:':<56} {total_geral:,.2f}")
+        print("-" * 75)
+    
     def visualizar_resumo_investimentos(self, carteira_id: int):
         """Busca e exibe o resumo dos investimentos de uma carteira específica."""
         limpar_terminal()
         print("--- Resumo de Investimentos da Carteira ---")
         
-        # A chamada correta, passando o carteira_id que o método recebeu
         resumo = self.db.sumarizar_investimentos_por_ativo(carteira_id)
+        self._exibir_tabela_resumo(resumo) # Reutilizando nosso novo método!
         
-        if not resumo:
-            print("\nNenhum investimento registrado nesta carteira.")
-        else:
-            print(f"\n{'Ativo':<30} {'Nicho (Categoria)':<25} {'Valor Investido (R$)'}")
-            print("-" * 75)
-            total_geral = 0
-            for item in resumo:
-                total = item['total_investido']
-                total_geral += total
-                print(f"{item['nome_ativo']:<30} {item['nicho']:<25} {total:,.2f}")
-            
-            print("-" * 75)
-            print(f"{'VALOR TOTAL GERAL:':<56} {total_geral:,.2f}")
-            print("-" * 75)
-            
         pausar_e_limpar()
 
     def visualizar_historico_aportes(self, carteira_id: int):
@@ -377,7 +477,7 @@ class InvestiMatchApp:
         historico = self.db.carregar_historico_da_carteira(carteira_id)
         
         if not historico:
-            print("\nNenhum investimento registrado nesta carteira.")
+            print("\nNenhum investimento registrado nesta carteira. No menu anterior, selecione a opção '1' para registrar seu primeiro investimento!")
         else:
             # Ajustamos a tabela para mostrar o nicho também
             print(f"\n{'Data e Hora':<25} {'Ativo':<30} {'Nicho':<20} {'Valor (R$)'}")
@@ -388,6 +488,34 @@ class InvestiMatchApp:
         
         pausar_e_limpar()
 
+    def processar_exclusao_carteira(self, carteiras: list):
+        """Processa a exclusão de uma carteira existente."""
+        try:
+            id_para_excluir = int(input("\nDigite o ID da carteira que deseja EXCLUIR: ").strip())
+            # Verifica se o ID fornecido corresponde a uma das carteiras do usuário
+            carteira_existe = any(c.id == id_para_excluir for c in carteiras)
+
+            if not carteira_existe:
+                print("\nID inválido ou não pertence a você.")
+                pausar_e_limpar()
+                return
+
+            print(f"\n🛑 ATENÇÃO: Você está prestes a excluir a carteira com ID {id_para_excluir}.")
+            print("Todos os investimentos registrados nela serão perdidos para sempre.")
+            confirmacao = input("Digite 'excluir' para confirmar: ").strip().lower()
+
+            if confirmacao == 'excluir':
+                self.db.excluir_carteira(id_para_excluir)
+            else:
+                print("\nExclusão cancelada.")
+            
+            pausar_e_limpar()
+
+        except ValueError:
+            print("\nEntrada inválida. Por favor, digite um número de ID.")
+            pausar_e_limpar()
+
+    
     def menu_usuario_logado(self):
         while True:
             limpar_terminal()
