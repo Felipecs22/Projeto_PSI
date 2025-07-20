@@ -20,7 +20,7 @@ Cansado de planilhas confusas para acompanhar seus investimentos? O InvestiMatch
 
 ---
 
-## 🗂️ Arquitetura e Filosofia do Projeto
+## 🗂️ Arquitetura do Projeto
 
 O InvestiMatch evoluiu de um script único para uma arquitetura modular e orientada a objetos, onde cada parte do sistema é um "especialista" com uma única responsabilidade.
 
