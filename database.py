@@ -5,9 +5,9 @@ NOME_BANCO = "investimatch.db"
 
 def inicializar_db():
     """
-    Cria as tabelas do banco de dados com a NOVA estrutura de carteiras.
+    Cria as tabelas do banco de dados 
     """
-    print("Inicializando banco de dados com nova estrutura...")
+    print("Inicializando banco de dados")
     
     conexao = sqlite3.connect(NOME_BANCO)
     cursor = conexao.cursor()
@@ -33,7 +33,7 @@ def inicializar_db():
         )
         """)
 
-        # TABELA para as carteiras (portfólios) do usuário
+        # Tabela para as carteiras 
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS carteiras (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
