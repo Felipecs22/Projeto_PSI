@@ -1,49 +1,44 @@
 # 📋 InvestiMatch
 
-Cansado de planilhas confusas para acompanhar seus investimentos? O InvestiMatch nasceu como um projeto para simplificar essa jornada. Ele te ajuda a entender seu perfil de investidor, organiza seus aportes em diferentes carteiras e oferece recomendações personalizadas baseadas no seu comportamento.
-
-É uma ferramenta construída para trazer clareza e organização ao mundo dos investimentos pessoais, evoluindo de um simples script para uma aplicação robusta e segura.
+Este artigo apresenta o desenvolvimento do Investimatch, uma aplicação em Python voltada à organização de carteiras de investimento de forma personalizada. A plataforma identifica o perfil do investidor por meio de um questionário e, com base nas respostas, sugere uma alocação estratégica entre diferentes tipos de ativos. O sistema foi construído para auxiliar tanto iniciantes quanto investidores experientes, promovendo decisões mais conscientes e alinhadas ao perfil de risco individual.
 
 ---
 
-## ✨ O que o InvestiMatch faz?
+## ✨ Funcionalidades Principais
 
-* **Gestão de Múltiplas Carteiras 📂:** Crie carteiras separadas para diferentes objetivos, como "Aposentadoria", "Viagem dos Sonhos" ou "Reserva de Emergência", e organize seus investimentos de forma lógica.
+* **Gestão de Múltiplas Carteiras 📂:** Crie e gerencie carteiras separadas para diferentes objetivos (ex: "Aposentadoria", "Reserva de Emergência") para uma organização financeira clara e eficaz.
 
-* **Análise de Perfil de Investidor 🧠:** Através de um questionário simples, o sistema traça seu perfil de investidor para que você entenda melhor sua tolerância a riscos e seus objetivos.
+* **Análise de Perfil de Investidor 🧠:** Através de um questionário intuitivo, o sistema identifica o perfil de risco do usuário, um pilar fundamental para uma tomada de decisão segura no mercado financeiro.
 
-* **Sistema de Recomendação Personalizado 🎯:** Com base no seu perfil, o aplicativo calcula uma pontuação de compatibilidade para diferentes classes de ativos (Renda Fixa, Ações, Cripto, etc.), ajudando a guiar suas decisões.
+* **Recomendação e Alocação Estratégica 🎯:** O sistema gera uma sugestão de alocação de ativos com base no perfil identificado, traduzindo as respostas do usuário em um ranking de compatibilidade e uma distribuição percentual clara e educativa.
 
-* **Registro de Aportes e Retiradas 📈:** Registre cada compra ou venda de ativos em suas respectivas carteiras. O sistema mantém um histórico detalhado e um resumo consolidado do valor total investido por ativo.
+* **Registro de Aportes e Retiradas 📈:** Registre cada transação em suas respectivas carteiras. O sistema mantém um histórico detalhado (extrato de movimentações) e um resumo consolidado do valor total por ativo.
 
-* **Autenticação Segura 🔐:** O sistema protege suas informações com um fluxo de autenticação completo, incluindo cadastro com verificação por e-mail, recuperação de conta e senhas armazenadas com hashing de segurança.
+* **Autenticação Segura 🔐:** O sistema protege as informações com um fluxo de autenticação completo, incluindo cadastro com verificação por e-mail, recuperação de conta, exclusão de conta e senhas armazenadas com hashing de segurança.
 
 ---
 
 ## 🗂️ Arquitetura do Projeto
 
-O InvestiMatch evoluiu de um script único para uma arquitetura modular e orientada a objetos, onde cada parte do sistema é um "especialista" com uma única responsabilidade.
+O InvestiMatch foi desenvolvido utilizando os princípios da programação orientada a objetos, o que facilitou a organização, reuso e manutenção do código. A arquitetura modular garante que cada parte do sistema tenha uma responsabilidade clara:
 
-* **`main.py` (O Gerente 👔):** Orquestra a aplicação, controla os menus e o fluxo de interação com o usuário, mas delega as tarefas pesadas para os outros especialistas.
-
-* **`database.py` (O Arquivista 🗄️):** É o único que sabe falar com o banco de dados. Todas as operações de leitura, escrita, atualização e exclusão de dados estão centralizadas aqui.
-
-* **`models.py` (As Plantas Baixas 📐):** Define a estrutura dos nossos dados através de classes como `Usuario`, `Carteira` e `PerfilInvestidor`. Garante que os dados sejam tratados de forma organizada e consistente.
-
-* **`servicos.py` (O Carteiro 📧):** Um especialista focado em uma única tarefa externa: enviar e-mails para verificação de conta e recuperação de senha.
-
-* **`utils.py` (A Caixa de Ferramentas 🛠️):** Contém funções auxiliares e genéricas, como a limpeza do terminal ou a geração de hashes para senhas, que podem ser usadas por qualquer parte do sistema.
+* **`main.py` (O Gerente 👔):** Orquestra a aplicação, controla os menus e o fluxo de interação com o usuário.
+* **`database.py` (O Arquivista 🗄️):** Centraliza toda a comunicação com o banco de dados SQLite, gerenciando as operações de leitura e escrita.
+* **`models.py` (As Plantas Baixas 📐):** Define a estrutura dos dados através de classes como `Usuario`, `Carteira` e `PerfilInvestidor`.
+* **`servicos.py` (O Carteiro 📧):** Isola a comunicação com serviços externos, como o envio de e-mails via SMTP.
+* **`utils.py` (A Caixa de Ferramentas 🛠️):** Contém funções auxiliares e genéricas, como a limpeza do terminal e a geração de hashes para senhas.
 
 ---
 
 ## 📚 Tecnologias Utilizadas
 
-* **Python 3:** A linguagem principal do projeto.
-* **SQLite3:** Para armazenar todos os dados de forma segura e organizada em um banco de dados local, substituindo os antigos arquivos de texto.
+* **Python 3:** A linguagem principal do projeto, escolhida por sua clareza e vasto ecossistema.
+* **SQLite3:** Para armazenar todos os dados de forma segura e organizada em um banco de dados local.
 * **`hashlib`:** Para garantir a segurança das senhas dos usuários através de hashing.
-* **`smtplib` e `email`:** Para a comunicação com o usuário via e-mail, de forma nativa.
-* **`python-dotenv`:** Para proteger informações sensíveis (como senhas de e-mail), mantendo-as fora do código-fonte e em um ambiente seguro.
-* **`os`, `re`, `random`, `time`:** Bibliotecas padrão do Python para diversas funcionalidades de apoio.
+* **`smtplib` e `email.message`:** Para a comunicação com o usuário via e--mail de forma nativa.
+* **`python-dotenv`:** Para proteger informações sensíveis, mantendo-as fora do código-fonte.
+* **Git:** Ferramenta de controle de versões utilizada para acompanhar as mudanças no código e permitir a colaboração segura.
+* **Bibliotecas Padrão:** `os`, `re`, `random`, `datetime`.
 
 ---
 
@@ -59,23 +54,39 @@ O InvestiMatch evoluiu de um script único para uma arquitetura modular e orient
     cd Projeto_PSI
     ```
 
-3.  **Instale as Dependências:**
-    O projeto tem uma dependência externa que precisa ser instalada.
+3.  **Crie e Ative um Ambiente Virtual:**
     ```bash
-    pip install python-dotenv
+    # Criar o ambiente
+    python -m venv .venv
+    # Ativar no Windows
+    .venv\Scripts\activate
+    # Ativar no macOS/Linux
+    # source .venv/bin/activate
     ```
 
-4.  **Configure suas Credenciais:**
-    Crie um arquivo chamado `.env` na pasta raiz do projeto. Você pode copiar o arquivo `.env.example` (se houver) ou criar um novo com o seguinte conteúdo, preenchendo com suas informações:
+4.  **Instale as Dependências:**
+    Use o arquivo `requirements.txt` para instalar as bibliotecas necessárias.
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+5.  **Configure suas Credenciais:**
+    Crie um arquivo chamado `.env` na pasta raiz do projeto. Preencha com suas informações de e-mail e Senha de App do Google:
     ```
     # Dentro do arquivo .env
     EMAIL_REMETENTE="seu-email-de-envio@gmail.com"
     SENHA_APP="sua-senha-de-app-de-16-letras"
     ```
-    *Lembre-se que `SENHA_APP` deve ser uma "Senha de App" gerada na sua conta Google.*
 
-5.  **Execute a Aplicação:**
+6.  **Execute a Aplicação:**
     ```bash
     python main.py
     ```
-    O programa irá inicializar o banco de dados (`investimatch.db`) na primeira execução e exibir o menu principal.
+    O programa irá inicializar o banco de dados e exibir o menu principal.
+
+---
+
+## 👥 Autores
+
+* **Arthur Alves** - `arthurasantos.pro@gmail.com`
+* **Felipe Santos** - `fcsantos201@gmail.com`
