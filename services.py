@@ -3,18 +3,15 @@ from email.message import EmailMessage
 import os
 from dotenv import load_dotenv
 
-# carrega as variáveis do arquivo .env para o ambiente do sistema
 load_dotenv()
 
-# pegando as variáveis 
-EMAIL_REMETENTE = os.getenv("EMAIL_REMETENTE", "")
-SENHA_APP = os.getenv("SENHA_APP", "")
+#lendo credenciais
+email_lido = os.getenv("EMAIL_REMETENTE")
+senha_lida = os.getenv("SENHA_APP")
 
-print("--- INICIANDO DEBUG DE CREDENCIAIS ---")
-print(f"E-mail que será usado: {EMAIL_REMETENTE}")
-print(f"Senha de App foi lida do .env? {'Sim' if SENHA_APP else 'NÃO'}")
-print(f"Comprimento da Senha lida: {len(SENHA_APP) if SENHA_APP else 0}")
-print("--------------------------------------")
+#tratamento de erro nas strings
+EMAIL_REMETENTE = str(email_lido).strip() if email_lido else ""
+SENHA_APP = str(senha_lida).strip() if senha_lida else ""
 
 class ServicoEmail:
     """ classe com a lógica de envio de emails"""
