@@ -10,6 +10,12 @@ load_dotenv()
 EMAIL_REMETENTE = os.getenv("EMAIL_REMETENTE", "")
 SENHA_APP = os.getenv("SENHA_APP", "")
 
+print("--- INICIANDO DEBUG DE CREDENCIAIS ---")
+print(f"E-mail que será usado: {EMAIL_REMETENTE}")
+print(f"Senha de App foi lida do .env? {'Sim' if SENHA_APP else 'NÃO'}")
+print(f"Comprimento da Senha lida: {len(SENHA_APP) if SENHA_APP else 0}")
+print("--------------------------------------")
+
 class ServicoEmail:
     """ classe com a lógica de envio de emails"""
     def __init__(self):

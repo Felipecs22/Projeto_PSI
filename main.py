@@ -79,7 +79,7 @@ class InvestiMatchApp:
             limpar_terminal()
             print(f"--- Gerenciando a Carteira: '{carteira.nome}' ---")
             print("1 - Registrar novo aporte nesta carteira")
-            print("2 - Registrar retirada nesta carteira") # <- NOVA OPÇÃO
+            print("2 - Registrar retirada nesta carteira") 
             print("3 - Ver resumo desta carteira")
             print("4 - Ver histórico de aportes desta carteira")
             print("5 - Voltar")
@@ -326,11 +326,10 @@ class InvestiMatchApp:
         pausar_e_limpar()
 
     def exibir_recomendacoes(self):
-        """Carrega o perfil do usuário, gera e exibe as recomendações de investimento."""
+        """Carrega o perfil do usuário, gera e exibe as recomendações com explicações."""
         limpar_terminal()
         print("--- Recomendações de Investimento ---")
 
-        # 1. Carrega o perfil do usuário
         perfil = self.db.carregar_perfil(self.usuario_logado.id)
 
         if not perfil:
@@ -339,25 +338,36 @@ class InvestiMatchApp:
             pausar_e_limpar()
             return
 
-        # 2. Prepara os dados para o avaliador
+        # dicionário que explica cada nicho
+        explicacoes_ativos = {
+            "Renda Fixa": "Ideal para quem busca segurança e estabilidade. Tem baixo risco e rendimento previsível.",
+            "FIIs": "Fundos que investem em imóveis, ideais para quem busca renda mensal com risco moderado.",
+            "Ações": "Recomendadas para quem aceita mais risco em troca de maior retorno no longo prazo.",
+            "Cripto": "Alto risco e alta volatilidade, indicadas apenas para perfis agressivos."
+        }
+        
+        #definindo nichos e suas caracteristicas
         nichos_disponiveis = [
-            NichoInvestimento(nome="Tesouro Selic (Renda Fixa)", risco=1, experiencia=1, liquidez=5),
-            NichoInvestimento(nome="CDBs (Liquidez Diária)", risco=2, experiencia=2, liquidez=4),
-            NichoInvestimento(nome="Fundos Imobiliários (FIIs)", risco=3, experiencia=3, liquidez=3),
-            NichoInvestimento(nome="Ações Brasileiras", risco=4, experiencia=4, liquidez=3),
-            NichoInvestimento(nome="Criptomoedas", risco=5, experiencia=4, liquidez=4)
+            NichoInvestimento(nome="Renda Fixa", risco=1, experiencia=1, liquidez=5, descricao=explicacoes_ativos.get("Renda Fixa")),
+            NichoInvestimento(nome="FIIs", risco=3, experiencia=3, liquidez=3, descricao=explicacoes_ativos.get("FIIs")),
+            NichoInvestimento(nome="Ações", risco=4, experiencia=4, liquidez=3, descricao=explicacoes_ativos.get("Ações")),
+            NichoInvestimento(nome="Cripto", risco=5, experiencia=4, liquidez=4, descricao=explicacoes_ativos.get("Cripto"))
         ]
 
-        # 3. Usa o 'cérebro' para obter o ranking
         avaliador = AvaliadorPerfil(perfil)
         ranking = avaliador.gerar_ranking(nichos_disponiveis)
         
-        # 4. Exibe o resultado
         print("\nBaseado no seu perfil, este é o ranking de adequação para cada nicho:")
-        for i, item in enumerate(ranking):
-            print(f"  {i+1}º - {item['nicho']} (Pontuação de Compatibilidade: {item['pontuacao']})")
         
-        pausar_e_limpar()  
+        for i, item_ranking in enumerate(ranking):
+            
+            nicho_obj = next((n for n in nichos_disponiveis if n.nome == item_ranking['nicho']), None)
+            
+            print(f"\n{i+1}º - {item_ranking['nicho']} (Pontuação: {item_ranking['pontuacao']})")
+            if nicho_obj and nicho_obj.descricao:
+                print(f"   ↳ {nicho_obj.descricao}") #Exibe a explicação
+        
+        pausar_e_limpar()
 
     def processar_nova_carteira(self):
         """Processa a criação de uma nova carteira com validação de input."""

@@ -36,11 +36,12 @@ class Carteira:
 """cria um nicho de investimento com suas características intrínsecas."""
 class NichoInvestimento:
     
-    def __init__(self, nome: str, risco: int, experiencia: int, liquidez: int):
+    def __init__(self, nome: str, risco: int, experiencia: int, liquidez: int, descricao: str = ""):
         self.nome = nome
         self.risco = risco
         self.experiencia_requerida = experiencia
         self.liquidez = liquidez
+        self.descricao = descricao
 
 """classe para caucular a adequação de nichos de investimento com base nas respostas de um usuário."""
 
