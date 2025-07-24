@@ -1,7 +1,7 @@
 import database
 from models import Usuario, NichoInvestimento, AvaliadorPerfil, Carteira
 from utils import limpar_terminal, pausar_e_limpar, gerar_hash_senha
-from services import ServicoEmail
+#from services import ServicoEmail
 import time
 import random
 
@@ -13,7 +13,7 @@ class InvestiMatchApp:
         """O construtor da classe, executado ao criar o objeto."""
         self.db = database  # guarda uma referência ao nosso módulo de banco de dados
         self.usuario_logado = None  # controla o estado de login
-        self.servico_email = ServicoEmail()
+        #self.servico_email = ServicoEmail()
 
     """ Metodos q chamam as interfaces (alto nível) """
 
@@ -312,8 +312,8 @@ class InvestiMatchApp:
             return
 
         senha = self.validar_senha("Crie sua nova senha")
-
-        codigo_verificacao = random.randint(100000, 999999)
+        #comentado para correção de bug
+        ''' codigo_verificacao = random.randint(100000, 999999)
         assunto = "InvestiMatch - Código de Verificação"
         conteudo = f"Seu código de verificação para o cadastro é: {codigo_verificacao}"
 
@@ -333,7 +333,7 @@ class InvestiMatchApp:
             pausar_e_limpar()
             return
 
-        print("\nE-mail verificado com sucesso!")
+        print("\nE-mail verificado com sucesso!")'''
         try:
             hash_da_senha = gerar_hash_senha(senha)
             novo_usuario = Usuario(email=email, senha=hash_da_senha)
@@ -362,7 +362,7 @@ class InvestiMatchApp:
             print("\nEmail ou senha inválidos.")
             pausar_e_limpar()
 
-    def processar_recuperacao_senha(self):
+    '''def processar_recuperacao_senha(self):
         """Gerencia o fluxo de recuperação de senha do usuário."""
         limpar_terminal()
         print("--- Recuperação de Conta ---")
@@ -407,7 +407,7 @@ class InvestiMatchApp:
         else:
             print("\nCódigo incorreto. A operação foi cancelada por segurança.")
 
-        pausar_e_limpar()
+        pausar_e_limpar()'''
 
     def processar_exclusao_conta(self):
         """Gerencia o fluxo para excluir a conta inteira do usuário logado."""

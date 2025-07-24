@@ -1,4 +1,4 @@
-import smtplib
+'''import smtplib
 from email.message import EmailMessage
 import os
 from dotenv import load_dotenv
@@ -39,4 +39,4 @@ class ServicoEmail:
             return True
         except Exception as e:
             print(f"Falha ao enviar e-mail: {e}")
-            return False
+            return False'''
